@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日剧日漫搜索 — 正版平台查询</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #fafaf8; --bg-card: #fff; --bg-input: #f3f2ef;
+  --text: #2c2c2c; --text-secondary: #6b6b6b; --text-muted: #999;
+  --border: #e5e3de; --accent: #c44f4f; --accent-hover: #a83a3a;
+  --drama-badge: #4a7fb5; --anime-badge: #d4853c; --movie-badge: #6a9b5a;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-hover: 0 8px 30px rgba(0,0,0,.10);
+  --radius: 14px; --radius-sm: 8px;
+  --transition: .2s cubic-bezier(.4,0,.2,1);
+  --font: "PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-jp: "Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1c; --bg-card: #242426; --bg-input: #2e2e30;
+  --text: #e6e5e3; --text-secondary: #b0afad; --text-muted: #777;
+  --border: #353537;
+  --shadow: 0 1px 3px rgba(0,0,0,.2); --shadow-hover: 0 8px 30px rgba(0,0,0,.35);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font); background: var(--bg); color: var(--text);
+  line-height: 1.6; min-height: 100vh;
+  transition: background var(--transition), color var(--transition);
+}
+
+.header {
+  background: var(--bg-card); border-bottom: 1px solid var(--border);
+  padding: 0 24px; position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px; gap: 16px;
+}
+.logo { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.logo .icon { font-size: 1.5rem; }
+.logo span { background: linear-gradient(135deg, #c44f4f, #c96a3b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.theme-toggle {
+  background: var(--bg-input); border: 1px solid var(--border);
+  width: 38px; height: 38px; border-radius: 50%;
+  cursor: pointer; font-size: 1.1rem; display: flex;
+  align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.theme-toggle:hover { border-color: var(--accent); }
+
+.hero {
+  background: linear-gradient(160deg, #f5f0eb 0%, #f0ece6 30%, #efe9df 100%);
+  padding: 48px 24px 40px; text-align: center;
+}
+[data-theme="dark"] .hero { background: linear-gradient(160deg, #1e1d1f 0%, #1c1b1e 30%, #1a191c 100%); }
+.hero h1 { font-size: 2rem; font-weight: 700; margin-bottom: 6px; }
+.hero p { color: var(--text-secondary); font-size: .95rem; margin-bottom: 28px; }
+.search-wrapper { max-width: 640px; margin: 0 auto; position: relative; }
+.search-box {
+  display: flex; align-items: center;
+  background: var(--bg-card); border: 2px solid var(--border);
+  border-radius: 50px; padding: 4px;
+  transition: all var(--transition); box-shadow: var(--shadow);
+}
+.search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(196,79,79,.1); }
+.search-box input {
+  flex: 1; border: none; outline: none; background: transparent;
+  padding: 12px 18px; font-size: 1rem; color: var(--text);
+  font-family: var(--font); min-width: 0;
+}
+.search-box input::placeholder { color: var(--text-muted); }
+.search-box button {
+  background: var(--accent); color: #fff; border: none;
+  padding: 10px 28px; border-radius: 50px; cursor: pointer;
+  font-size: .95rem; font-weight: 600; white-space: nowrap;
+  transition: background var(--transition); font-family: var(--font);
+}
+.search-box button:hover { background: var(--accent-hover); }
+.search-hint { margin-top: 10px; font-size: .8rem; color: var(--text-muted); }
+
+.filter-bar {
+  max-width: 1200px; margin: 0 auto; padding: 16px 24px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+}
+.cat-tabs { display: flex; gap: 4px; background: var(--bg-input); border-radius: 50px; padding: 3px; }
+.cat-tab {
+  padding: 7px 18px; border-radius: 50px; border: none; cursor: pointer;
+  font-size: .85rem; font-weight: 500; font-family: var(--font);
+  background: transparent; color: var(--text-secondary);
+  transition: all var(--transition); white-space: nowrap;
+}
+.cat-tab.active { background: #fff; color: var(--text); box-shadow: var(--shadow); font-weight: 600; }
+[data-theme="dark"] .cat-tab.active { background: #3a3a3c; }
+.genre-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-left: 8px; }
+.genre-chip {
+  padding: 5px 14px; border-radius: 50px; border: 1px solid var(--border);
+  cursor: pointer; font-size: .8rem; font-family: var(--font);
+  background: transparent; color: var(--text-secondary);
+  transition: all var(--transition); white-space: nowrap;
+}
+.genre-chip:hover { border-color: var(--accent); color: var(--accent); }
+.genre-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.result-count { font-size: .82rem; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+
+.results-grid {
+  max-width: 1200px; margin: 0 auto; padding: 8px 24px 40px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--bg-card); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 20px;
+  box-shadow: var(--shadow); cursor: pointer;
+  transition: all var(--transition); position: relative;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+.card-header { display: flex; gap: 12px; align-items: flex-start; }
+.card-poster {
+  width: 64px; height: 88px; border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; overflow: hidden;
+  background: linear-gradient(135deg, #e8e5df 0%, #ddd9d2 100%);
+}
+[data-theme="dark"] .card-poster { background: linear-gradient(135deg, #2e2d2f 0%, #262528 100%); }
+.card-info { flex: 1; min-width: 0; }
+.card-title { font-size: 1.05rem; font-weight: 700; line-height: 1.3; }
+.card-title-jp { font-size: .82rem; color: var(--text-muted); font-family: var(--font-jp); margin-top: 2px; }
+.card-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; align-items: center; }
+.type-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 50px;
+  font-size: .72rem; font-weight: 600; color: #fff;
+}
+.type-badge.drama { background: var(--drama-badge); }
+.type-badge.anime { background: var(--anime-badge); }
+.type-badge.movie { background: var(--movie-badge); }
+.rating { font-size: .82rem; color: #e8a030; font-weight: 600; }
+.year { font-size: .78rem; color: var(--text-muted); }
+.card-genres { display: flex; gap: 4px; flex-wrap: wrap; }
+.card-genres span { font-size: .72rem; padding: 2px 8px; border-radius: 50px; background: var(--bg-input); color: var(--text-secondary); }
+.card-desc {
+  font-size: .82rem; color: var(--text-secondary);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; line-height: 1.5;
+}
+.card-platforms { display: flex; flex-wrap: wrap; gap: 6px; }
+.platform-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 12px; border-radius: 50px; font-size: .78rem;
+  font-weight: 500; text-decoration: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-secondary); background: var(--bg-card);
+  transition: all var(--transition);
+}
+.platform-link:hover { border-color: var(--accent); color: var(--accent); background: rgba(196,79,79,.04); }
+.platform-link .pl-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--bg-card); border-radius: var(--radius);
+  max-width: 520px; width: 100%; max-height: 85vh;
+  overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  padding: 28px; position: relative;
+}
+.modal-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg-card);
+  cursor: pointer; font-size: 1.1rem; display: flex;
+  align-items: center; justify-content: center;
+  transition: all var(--transition); color: var(--text);
+}
+.modal-close:hover { background: var(--bg-input); }
+.modal h2 { font-size: 1.4rem; margin-bottom: 4px; }
+.modal .modal-jp { font-family: var(--font-jp); color: var(--text-muted); margin-bottom: 16px; font-size: .9rem; }
+.modal .modal-desc { color: var(--text-secondary); margin-bottom: 20px; line-height: 1.7; }
+.modal h3 { font-size: .95rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.modal-platforms { display: flex; flex-direction: column; gap: 8px; }
+.modal-pl-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); text-decoration: none;
+  color: var(--text); transition: all var(--transition);
+}
+.modal-pl-item:hover { border-color: var(--accent); background: rgba(196,79,79,.03); }
+.modal-pl-item .pl-name { font-weight: 600; flex: 1; }
+.modal-pl-item .pl-type { font-size: .76rem; padding: 3px 10px; border-radius: 50px; background: var(--bg-input); color: var(--text-secondary); }
+.modal-pl-item .pl-arrow { color: var(--accent); font-size: 1.1rem; }
+
+/* Fallback */
+.fallback {
+  max-width: 1200px; margin: 0 auto; padding: 20px 24px 48px;
+  display: none;
+}
+.fallback.show { display: block; }
+.fallback h3 { font-size: 1rem; margin-bottom: 12px; color: var(--text-secondary); }
+.fallback-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.fallback-link {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 18px; border-radius: 50px; text-decoration: none;
+  font-size: .85rem; font-weight: 500; border: 1.5px solid var(--border);
+  color: var(--text-secondary); transition: all var(--transition);
+}
+.fallback-link:hover { border-color: var(--accent); color: var(--accent); }
+
+.empty-state { text-align: center; padding: 48px 20px; grid-column: 1 / -1; }
+.empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
+.empty-state p { color: var(--text-muted); }
+
+.footer {
+  text-align: center; padding: 24px; color: var(--text-muted);
+  font-size: .75rem; border-top: 1px solid var(--border);
+  max-width: 1200px; margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .header { padding: 0 16px; }
+  .hero { padding: 32px 16px 28px; }
+  .hero h1 { font-size: 1.5rem; }
+  .search-box input { padding: 10px 14px; font-size: .9rem; }
+  .search-box button { padding: 8px 20px; font-size: .85rem; }
+  .filter-bar { padding: 12px 16px; gap: 8px; }
+  .results-grid { grid-template-columns: 1fr; padding: 8px 16px 32px; }
+  .genre-chips { margin-left: 0; }
+  .result-count { margin-left: 0; width: 100%; text-align: left; }
+  .modal { padding: 20px; }
+}
+
+@media (max-width: 400px) {
+  .cat-tab { padding: 6px 12px; font-size: .78rem; }
+  .genre-chip { padding: 4px 10px; font-size: .72rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo"><span class="icon">🎬</span><span>日剧日漫搜索</span></div>
+    <button class="theme-toggle" id="themeToggle" title="切换深色/浅色模式">🌙</button>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>🔍 搜索日剧 &amp; 日漫</h1>
+  <p>找到你想看的作品，一键跳转正版播放平台</p>
+  <div class="search-wrapper">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="输入剧名或动漫名… 如：鬼灭之刃 / 非自然死亡" autofocus>
+      <button id="searchBtn">🔍 搜索</button>
+    </div>
+  </div>
+  <div class="search-hint">支持中文名、日文名、罗马音搜索 · 共收录 <strong id="totalCount">0</strong> 部作品</div>
+</section>
+
+<div class="filter-bar" id="filterBar">
+  <div class="cat-tabs" id="catTabs">
+    <button class="cat-tab active" data-cat="all">全部</button>
+    <button class="cat-tab" data-cat="drama">📺 日剧</button>
+    <button class="cat-tab" data-cat="anime">🎨 日漫</button>
+    <button class="cat-tab" data-cat="movie">🎬 电影</button>
+  </div>
+  <div class="genre-chips" id="genreChips"></div>
+  <div class="result-count" id="resultCount"></div>
+</div>
+
+<div class="results-grid" id="resultsGrid"></div>
+
+<div class="fallback" id="fallbackSection">
+  <h3>📡 未找到？在这些平台直接搜索：</h3>
+  <div class="fallback-grid" id="fallbackLinks"></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<div class="footer">
+  数据仅供参考，实际播放情况可能因地区、版权变动而异 · 建议前往正版平台观看
+</div>
+
+<script>
+// ==================== DATABASE ====================
+var DATABASE = [
+  // === 日剧 ===
+  {id:1,title:"非自然死亡",title_jp:"アンナチュラル",type:"drama",year:2018,genres:["悬疑","法医","职场"],rating:9.4,desc:"三澄美琴在非自然死亡调查研究所(UDI Lab)工作,与同事们一起探查各种非自然死亡的真相。石原里美主演,米津玄师演唱主题曲Lemon。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=非自然死亡",color:"#fb7299"},{name:"优酷",url:"https://so.youku.com/search_video/q_非自然死亡",color:"#00b1ff"}]},
+  {id:2,title:"逃避虽可耻但有用",title_jp:"逃げるは恥だが役に立つ",type:"drama",year:2016,genres:["爱情","喜剧","职场"],rating:8.4,desc:"25岁没工作的实栗与35岁上班族平匡契约结婚,从「雇佣婚姻」逐渐发展为真正的爱情。新垣结衣、星野源主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=逃避虽可耻但有用",color:"#fb7299"}]},
+  {id:3,title:"Legal High",title_jp:"リーガル・ハイ",type:"drama",year:2012,genres:["律政","喜剧"],rating:9.4,desc:"偏执狂妄的律师古美门研介与正义感爆棚的新人律师黛真知子组成搭档,在法庭上展开一场场精彩绝伦的对决。堺雅人、新垣结衣主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=Legal+High",color:"#fb7299"}]},
+  {id:4,title:"半泽直树",title_jp:"半沢直樹",type:"drama",year:2013,genres:["职场","金融","复仇"],rating:9.2,desc:"银行职员半泽直树面对职场不公,以「以牙还牙、加倍奉还」为信条,与上司和对手展开激烈对抗。堺雅人主演,现象级职场剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=半泽直树",color:"#fb7299"}]},
+  {id:5,title:"我是大哥大",title_jp:"今日から俺は!!",type:"drama",year:2018,genres:["喜剧","校园","青春"],rating:9.1,desc:"两个转校生为了成为不良少年而烫了卷发,结果引发一系列爆笑故事。贺来贤人、伊藤健太郎主演,福田雄一导演的沙雕喜剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=我是大哥大",color:"#fb7299"}]},
+  {id:6,title:"四重奏",title_jp:"カルテット",type:"drama",year:2017,genres:["音乐","悬疑","爱情"],rating:9.1,desc:"四名30多岁的男女在KTV偶然相遇,组成弦乐四重奏组合,在轻井泽的别墅中共同生活。松隆子、满岛光、高桥一生、松田龙平主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=四重奏",color:"#fb7299"}]},
+  {id:7,title:"重启人生",title_jp:"ブラッシュアップライフ",type:"drama",year:2023,genres:["奇幻","喜剧","人生"],rating:9.3,desc:"33岁的近藤麻美意外死亡后,为了下辈子能投胎做人而不断重启人生、积攒阴德。安藤樱主演,温暖治愈的神作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=重启人生",color:"#fb7299"}]},
+  {id:8,title:"深夜食堂",title_jp:"深夜食堂",type:"drama",year:2009,genres:["美食","治愈","人生"],rating:9.2,desc:"午夜12点开始营业的小餐馆,老板根据客人的要求做出各种料理,每道菜背后都有一个温暖的故事。小林薰主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=深夜食堂",color:"#fb7299"},{name:"爱奇艺",url:"https://so.iqiyi.com/so/q_深夜食堂",color:"#00be06"}]},
+  {id:9,title:"火花",title_jp:"火花",type:"drama",year:2016,genres:["人生","漫才","文艺"],rating:9.3,desc:"漫才艺人德永太步与前辈神谷才藏的师徒情谊,讲述在梦想与现实之间挣扎的艺人们的故事。林遣都、波冈一喜主演,Netflix出品。",platforms:[{name:"Netflix",url:"https://www.netflix.com/search?q=火花",color:"#e50914"}]},
+  {id:10,title:"轮到你了",title_jp:"あなたの番です",type:"drama",year:2019,genres:["悬疑","惊悚","推理"],rating:7.9,desc:"一对新婚夫妇搬进公寓后,被卷入一场交换杀人游戏。田中圭、原田知世主演,每集都有惊人反转。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=轮到你了",color:"#fb7299"}]},
+  {id:11,title:"弥留之国的爱丽丝",title_jp:"今際の国のアリス",type:"drama",year:2020,genres:["科幻","悬疑","生存"],rating:8.7,desc:"有栖良平与朋友们突然被传送到一个空无一人的东京,被迫参加以生命为赌注的游戏。山崎贤人、土屋太凤主演,Netflix出品。",platforms:[{name:"Netflix",url:"https://www.netflix.com/search?q=弥留之国的爱丽丝",color:"#e50914"}]},
+  {id:12,title:"First Love 初恋",title_jp:"First Love 初恋",type:"drama",year:2022,genres:["爱情","青春","纯爱"],rating:8.5,desc:"以宇多田光的歌曲First Love为灵感,讲述一对恋人在90年代末相遇、分离,又在20年后重逢的故事。满岛光、佐藤健主演。",platforms:[{name:"Netflix",url:"https://www.netflix.com/search?q=First+Love+初恋",color:"#e50914"}]},
+  {id:13,title:"我的事说来话长",title_jp:"俺の話は長い",type:"drama",year:2019,genres:["家庭","喜剧","人生"],rating:8.9,desc:"31岁的岸边满从创业失败后一直家里蹲,每天和母亲、姐姐一家斗嘴、找借口不工作,台词密集又好笑。生田斗真主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=我的事说来话长",color:"#fb7299"}]},
+  {id:14,title:"交响情人梦",title_jp:"のだめカンタービレ",type:"drama",year:2006,genres:["音乐","爱情","喜剧"],rating:9.1,desc:"钢琴天才千秋真一与邋遢的钢琴系学生野田惠相遇,在古典音乐的世界中互相成就。上野树里、玉木宏主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=交响情人梦",color:"#fb7299"}]},
+  {id:15,title:"仁医",title_jp:"JIN-仁-",type:"drama",year:2009,genres:["穿越","医疗","历史"],rating:9.0,desc:"脑外科医生南方仁意外穿越到江户时代,用现代医学知识救治病人,试图改变历史。大泽隆夫主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=仁医",color:"#fb7299"}]},
+  {id:16,title:"Doctor X",title_jp:"ドクターX〜外科医・大門未知子〜",type:"drama",year:2012,genres:["医疗","职场","女性"],rating:8.5,desc:"天才外科医生大门未知子以自由医生的身份在各大医院工作,从不失败、绝不加班。米仓凉子主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=Doctor+X",color:"#fb7299"}]},
+  {id:17,title:"求婚大作战",title_jp:"プロポーズ大作戦",type:"drama",year:2007,genres:["爱情","穿越","青春"],rating:8.8,desc:"岩濑健在青梅竹马吉田礼的婚礼上后悔莫及,精灵让他一次次穿越回过去,试图改变未来。山下智久、长泽雅美主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=求婚大作战",color:"#fb7299"}]},
+  {id:18,title:"魔女的条件",title_jp:"魔女の条件",type:"drama",year:1999,genres:["爱情","师生","禁忌"],rating:8.4,desc:"高中教师广濑未知与转学生黑泽光之间不被世俗接纳的爱情。松岛菜菜子、泷泽秀明主演,经典师生恋题材。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=魔女的条件",color:"#fb7299"}]},
+  {id:19,title:"花样男子",title_jp:"花より男子",type:"drama",year:2005,genres:["爱情","校园","偶像"],rating:8.3,desc:"贫穷少女牧野杉菜进入贵族学校,与F4之首道明寺司从冲突到相爱。井上真央、松本润、小栗旬主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=花样男子",color:"#fb7299"}]},
+  {id:20,title:"朝5晚9",title_jp:"5→9〜私に恋したお坊さん〜",type:"drama",year:2015,genres:["爱情","喜剧"],rating:7.7,desc:"英语老师樱庭润子被帅气和尚星川高岭热烈追求,上演一段甜蜜又搞笑的爱情故事。石原里美、山下智久主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=朝5晚9",color:"#fb7299"}]},
+  {id:21,title:"Silent",title_jp:"silent",type:"drama",year:2022,genres:["爱情","纯爱"],rating:8.6,desc:"高中时相爱的两人因男主逐渐失去听力而分手,8年后重逢。川口春奈、目黑莲主演,2022年现象级纯爱剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=Silent+日剧",color:"#fb7299"}]},
+  {id:22,title:"大豆田永久子与三名前夫",title_jp:"大豆田とわ子と三人の元夫",type:"drama",year:2021,genres:["喜剧","女性","人生"],rating:8.7,desc:"离过三次婚的建筑公司社长大豆田永久子,与三位前夫之间剪不断理还乱的日常。松隆子主演,坂元裕二编剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=大豆田永久子与三名前夫",color:"#fb7299"}]},
+  {id:23,title:"白色巨塔",title_jp:"白い巨塔",type:"drama",year:2003,genres:["医疗","职场","人性"],rating:9.6,desc:"外科医生财前五郎在医学界的权力争斗中一步步走向巅峰,也一步步走向深渊。唐泽寿明、江口洋介主演,日本医疗剧巅峰之作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=白色巨塔",color:"#fb7299"}]},
+  {id:24,title:"东京爱情故事",title_jp:"東京ラブストーリー",type:"drama",year:1991,genres:["爱情","经典"],rating:9.4,desc:"从小城市来到东京的永尾完治与开朗热情的赤名莉香之间令人心碎的爱情故事。织田裕二、铃木保奈美主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=东京爱情故事",color:"#fb7299"}]},
+  {id:25,title:"悠长假期",title_jp:"ロングバケーション",type:"drama",year:1996,genres:["爱情","人生","经典"],rating:9.2,desc:"过气模特叶山南在婚礼被放鸽子后,与钢琴家濑名秀俊同居,互相治愈。木村拓哉、山口智子主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=悠长假期",color:"#fb7299"}]},
+  {id:26,title:"胜者即是正义",title_jp:"リーガルハイ",type:"drama",year:2012,genres:["律政","喜剧"],rating:9.4,desc:"不按常理出牌的律师古美门研介用尽一切手段为委托人赢得官司。堺雅人代表作,又名Legal High。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=胜者即是正义",color:"#fb7299"}]},
+  {id:27,title:"极道鲜师",title_jp:"ごくせん",type:"drama",year:2002,genres:["校园","喜剧","热血"],rating:8.5,desc:"黑道千金山口久美子成为高中教师,用独特的方式管教问题学生。仲间由纪惠主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=极道鲜师",color:"#fb7299"}]},
+
+  // === 日漫 ===
+  {id:50,title:"鬼灭之刃",title_jp:"鬼滅の刃",type:"anime",year:2019,genres:["热血","战斗","少年"],rating:9.1,desc:"大正时代,少年灶门炭治郎全家被鬼杀害,妹妹祢豆子变成鬼,他踏上加入鬼杀队、为妹妹寻找复原方法的旅程。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=鬼灭之刃",color:"#fb7299"}]},
+  {id:51,title:"咒术回战",title_jp:"呪術廻戦",type:"anime",year:2020,genres:["战斗","热血","黑暗"],rating:8.9,desc:"高中生虎杖悠仁吞下诅咒之王宿傩的手指,加入东京都立咒术高等专门学校,与咒灵展开战斗。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=咒术回战",color:"#fb7299"},{name:"爱奇艺",url:"https://so.iqiyi.com/so/q_咒术回战",color:"#00be06"}]},
+  {id:52,title:"间谍过家家",title_jp:"SPY×FAMILY",type:"anime",year:2022,genres:["喜剧","日常","间谍"],rating:9.0,desc:"间谍「黄昏」为完成任务组建临时家庭,却不知「女儿」是超能力者、「妻子」是杀手。一家三口各有秘密,搞笑又温馨。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=间谍过家家",color:"#fb7299"}]},
+  {id:53,title:"进击的巨人",title_jp:"進撃の巨人",type:"anime",year:2013,genres:["战斗","黑暗","热血"],rating:9.3,desc:"人类被巨人逼到高墙之内生存,少年艾伦·耶格尔目睹母亲被巨人吃掉后,发誓要驱逐所有巨人。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=进击的巨人",color:"#fb7299"}]},
+  {id:54,title:"海贼王",title_jp:"ONE PIECE",type:"anime",year:1999,genres:["热血","冒险","少年"],rating:9.5,desc:"少年蒙奇·D·路飞为了成为海贼王,踏上伟大的航路寻找传说中的宝藏ONE PIECE。",platforms:[{name:"爱奇艺",url:"https://so.iqiyi.com/so/q_海贼王",color:"#00be06"},{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=海贼王",color:"#fb7299"}]},
+  {id:55,title:"火影忍者",title_jp:"NARUTO -ナルト-",type:"anime",year:2002,genres:["热血","忍者","少年"],rating:9.2,desc:"体内封印着九尾妖狐的少年漩涡鸣人,以成为火影为目标,在忍者世界中不断成长。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=火影忍者",color:"#fb7299"},{name:"爱奇艺",url:"https://so.iqiyi.com/so/q_火影忍者",color:"#00be06"},{name:"优酷",url:"https://so.youku.com/search_video/q_火影忍者",color:"#00b1ff"},{name:"腾讯视频",url:"https://v.qq.com/x/search/?q=火影忍者",color:"#ff6b00"}]},
+  {id:56,title:"死神",title_jp:"BLEACH",type:"anime",year:2004,genres:["热血","战斗","少年"],rating:8.6,desc:"高中生黑崎一护意外成为死神代理,保护人类免受虚的侵扰,逐渐卷入尸魂界的纷争。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=死神+动漫",color:"#fb7299"},{name:"优酷",url:"https://so.youku.com/search_video/q_死神+动漫",color:"#00b1ff"}]},
+  {id:57,title:"名侦探柯南",title_jp:"名探偵コナン",type:"anime",year:1996,genres:["推理","悬疑","日常"],rating:9.0,desc:"高中生侦探工藤新一被黑衣组织灌下毒药变成小孩,化名江户川柯南,一边破案一边追查组织。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=名侦探柯南",color:"#fb7299"},{name:"爱奇艺",url:"https://so.iqiyi.com/so/q_名侦探柯南",color:"#00be06"},{name:"腾讯视频",url:"https://v.qq.com/x/search/?q=名侦探柯南",color:"#ff6b00"}]},
+  {id:58,title:"银魂",title_jp:"銀魂",type:"anime",year:2006,genres:["喜剧","科幻","热血"],rating:9.5,desc:"外星人来袭的江户时代,坂田银时经营着万事屋,与伙伴们过着无厘头又热血的每一天。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=银魂",color:"#fb7299"}]},
+  {id:59,title:"钢之炼金术师FA",title_jp:"鋼の錬金術師 FULLMETAL ALCHEMIST",type:"anime",year:2009,genres:["冒险","炼金术","热血"],rating:9.6,desc:"爱德华与阿尔冯斯兄弟为复活母亲而进行人体炼成,失败后踏上寻找贤者之石的旅程。被誉为神作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=钢之炼金术师",color:"#fb7299"}]},
+  {id:60,title:"一拳超人",title_jp:"ワンパンマン",type:"anime",year:2015,genres:["战斗","喜剧","英雄"],rating:9.0,desc:"埼玉经过三年特训获得了无敌的力量,任何敌人都只需一拳就能解决,但也因此失去了战斗的激情。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=一拳超人",color:"#fb7299"}]},
+  {id:61,title:"Re:从零开始的异世界生活",title_jp:"Re:ゼロから始める異世界生活",type:"anime",year:2016,genres:["异世界","悬疑","奇幻"],rating:8.8,desc:"高中生菜月昴突然被召唤到异世界,获得了「死亡回归」的能力,每次死亡都会回到存档点重新开始。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=从零开始的异世界生活",color:"#fb7299"}]},
+  {id:62,title:"葬送的芙莉莲",title_jp:"葬送のフリーレン",type:"anime",year:2023,genres:["奇幻","治愈","人生"],rating:9.5,desc:"勇者一行人打败魔王后,精灵魔法使芙莉莲因长寿而不得不面对伙伴一一老去的现实,开始了理解人类的旅程。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=葬送的芙莉莲",color:"#fb7299"}]},
+  {id:63,title:"电锯人",title_jp:"チェンソーマン",type:"anime",year:2022,genres:["战斗","黑暗","热血"],rating:8.7,desc:"穷困少年淀治与恶魔波奇塔融合成为电锯人,加入公安对魔特异4课,与恶魔战斗。藤本树原作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=电锯人",color:"#fb7299"}]},
+  {id:64,title:"孤独摇滚!",title_jp:"ぼっち・ざ・ろっく!",type:"anime",year:2022,genres:["音乐","日常","喜剧"],rating:9.2,desc:"极度社恐的高中生后藤一里梦想成为摇滚乐手,偶然加入纽带乐队,在音乐中逐渐成长。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=孤独摇滚",color:"#fb7299"}]},
+  {id:65,title:"排球少年!!",title_jp:"ハイキュー!!",type:"anime",year:2014,genres:["运动","热血","青春"],rating:9.5,desc:"矮个子少年日向翔阳与天才二传手影山飞雄在高中排球队相遇,一同冲击全国大赛。最燃运动番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=排球少年",color:"#fb7299"}]},
+  {id:66,title:"灌篮高手",title_jp:"SLAM DUNK",type:"anime",year:1993,genres:["运动","篮球","热血"],rating:9.6,desc:"不良少年樱木花道为了追求晴子加入湘北篮球队,从一个篮球门外汉成长为球队支柱。永远的经典。",platforms:[{name:"爱奇艺",url:"https://so.iqiyi.com/so/q_灌篮高手",color:"#00be06"}]},
+  {id:67,title:"新世纪福音战士",title_jp:"新世紀エヴァンゲリオン",type:"anime",year:1995,genres:["科幻","机甲","心理"],rating:9.4,desc:"14岁的少年碇真嗣被父亲叫到NERV,驾驶EVA初号机对抗神秘敌人「使徒」。影响深远的里程碑作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=新世纪福音战士",color:"#fb7299"}]},
+  {id:68,title:"刀剑神域",title_jp:"ソードアート・オンライン",type:"anime",year:2012,genres:["科幻","冒险","游戏"],rating:8.0,desc:"桐人进入完全沉浸式VR游戏《刀剑神域》,发现无法登出且游戏内死亡等于现实中死亡,必须通关才能逃脱。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=刀剑神域",color:"#fb7299"}]},
+  {id:69,title:"某科学的超电磁炮",title_jp:"とある科学の超電磁砲",type:"anime",year:2009,genres:["科幻","校园","超能力"],rating:8.7,desc:"学园都市Level 5超能力者御坂美琴与朋友们在充满超能力者的城市中解决各种事件。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=某科学的超电磁炮",color:"#fb7299"}]},
+  {id:70,title:"命运石之门",title_jp:"Steins;Gate",type:"anime",year:2011,genres:["科幻","悬疑","时间旅行"],rating:9.3,desc:"自称疯狂科学家的冈部伦太郎偶然发明了能发送邮件到过去的时间机器,引发了一系列连锁反应。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=命运石之门",color:"#fb7299"}]},
+  {id:71,title:"紫罗兰永恒花园",title_jp:"ヴァイオレット・エヴァーガーデン",type:"anime",year:2018,genres:["治愈","文艺","爱情"],rating:8.9,desc:"战争结束后,曾是「武器」的少女薇尔莉特成为「自动手记人偶」,为他人代笔写信,逐渐理解「爱」的含义。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=紫罗兰永恒花园",color:"#fb7299"}]},
+  {id:72,title:"夏目友人帐",title_jp:"夏目友人帳",type:"anime",year:2008,genres:["治愈","妖怪","日常"],rating:9.4,desc:"高中生夏目贵志能看见妖怪,继承了祖母的「友人帐」,将名字还给妖怪们,在人与妖之间建立羁绊。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=夏目友人帐",color:"#fb7299"}]},
+  {id:73,title:"迷宫饭",title_jp:"ダンジョン飯",type:"anime",year:2024,genres:["奇幻","美食","冒险"],rating:9.1,desc:"在迷宫中冒险的冒险者们为了省钱,开始烹饪各种魔物作为食物。独特的美食×奇幻冒险番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=迷宫饭",color:"#fb7299"}]},
+  {id:74,title:"哆啦A梦",title_jp:"ドラえもん",type:"anime",year:1979,genres:["日常","科幻","子供向"],rating:9.3,desc:"来自22世纪的猫型机器人哆啦A梦用各种未来道具帮助小学生野比大雄。陪伴无数人成长的国民级动漫。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=哆啦A梦",color:"#fb7299"},{name:"爱奇艺",url:"https://so.iqiyi.com/so/q_哆啦A梦",color:"#00be06"}]},
+  {id:75,title:"蜡笔小新",title_jp:"クレヨンしんちゃん",type:"anime",year:1992,genres:["喜剧","日常","子供向"],rating:9.2,desc:"5岁的野原新之助以他特有的无厘头方式,与家人和朋友们过着充满欢笑的每一天。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=蜡笔小新",color:"#fb7299"},{name:"爱奇艺",url:"https://so.iqiyi.com/so/q_蜡笔小新",color:"#00be06"}]},
+  {id:76,title:"东京食尸鬼",title_jp:"東京喰種",type:"anime",year:2014,genres:["黑暗","战斗","都市传说"],rating:8.2,desc:"大学生金木研被改造为半喰种,在人类与喰种之间的夹缝中挣扎求生。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=东京食尸鬼",color:"#fb7299"}]},
+  {id:77,title:"龙珠",title_jp:"ドラゴンボール",type:"anime",year:1986,genres:["热血","战斗","冒险"],rating:9.4,desc:"孙悟空从一个小男孩成长为宇宙最强战士,收集龙珠、参加天下第一武道会、对抗各路强敌。",platforms:[{name:"爱奇艺",url:"https://so.iqiyi.com/so/q_龙珠",color:"#00be06"},{name:"腾讯视频",url:"https://v.qq.com/x/search/?q=龙珠",color:"#ff6b00"}]},
+  {id:78,title:"樱桃小丸子",title_jp:"ちびまる子ちゃん",type:"anime",year:1990,genres:["日常","喜剧","子供向"],rating:9.1,desc:"小学三年级女生樱桃子(小丸子)与家人、同学之间平凡又温馨的日常生活。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=樱桃小丸子",color:"#fb7299"}]},
+  {id:79,title:"机动战士高达SEED",title_jp:"機動戦士ガンダムSEED",type:"anime",year:2002,genres:["机甲","科幻","战争"],rating:8.6,desc:"调整者与自然人的战争愈演愈烈,少年基拉·大和在偶然中登上 Strike 高达,成为这场战争的关键人物。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=机动战士高达SEED",color:"#fb7299"}]},
+  {id:80,title:"鲁邦三世",title_jp:"ルパン三世",type:"anime",year:1971,genres:["冒险","喜剧","犯罪"],rating:8.8,desc:"世界级大盗鲁邦三世与伙伴次元大介、石川五右卫门、峰不二子周游世界,上演一出出精彩的冒险。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=鲁邦三世",color:"#fb7299"}]},
+
+  // === 动画电影 ===
+  {id:100,title:"千与千寻",title_jp:"千と千尋の神隠し",type:"movie",year:2001,genres:["奇幻","冒险","治愈"],rating:9.4,desc:"10岁少女千寻误入神灵的世界,父母被变成猪,她必须在汤屋中工作才能拯救父母。宫崎骏代表作,奥斯卡最佳动画长片。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=千与千寻",color:"#fb7299"}]},
+  {id:101,title:"你的名字。",title_jp:"君の名は。",type:"movie",year:2016,genres:["爱情","奇幻","青春"],rating:8.5,desc:"东京男孩泷与乡下女孩三叶发现彼此在睡梦中灵魂互换,跨越时空寻找对方。新海诚作品,现象级动画电影。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=你的名字",color:"#fb7299"}]},
+  {id:102,title:"天气之子",title_jp:"天気の子",type:"movie",year:2019,genres:["奇幻","爱情","青春"],rating:7.8,desc:"离家出走的少年帆高与能操控天气的少女阳菜相遇,在新宿的雨中谱写一段奇幻爱情。新海诚作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=天气之子",color:"#fb7299"}]},
+  {id:103,title:"铃芽之旅",title_jp:"すずめの戸締まり",type:"movie",year:2022,genres:["奇幻","冒险","公路"],rating:8.1,desc:"少女岩户铃芽与「闭门师」草太一同踏上关闭灾难之门的旅程。新海诚灾难三部曲收官之作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=铃芽之旅",color:"#fb7299"}]},
+  {id:104,title:"哈尔的移动城堡",title_jp:"ハウルの動く城",type:"movie",year:2004,genres:["奇幻","魔法","爱情"],rating:9.1,desc:"少女苏菲被荒野女巫诅咒变成老婆婆,躲进魔法师哈尔的移动城堡,展开一场奇幻冒险。宫崎骏作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=哈尔的移动城堡",color:"#fb7299"}]},
+  {id:105,title:"龙猫",title_jp:"となりのトトロ",type:"movie",year:1988,genres:["治愈","奇幻","子供向"],rating:9.2,desc:"两姐妹搬到乡下,遇见了只有纯真的孩子才能看到的森林精灵——龙猫。宫崎骏最温暖治愈的作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=龙猫",color:"#fb7299"}]},
+  {id:106,title:"鬼灭之刃：无限列车篇",title_jp:"劇場版「鬼滅の刃」無限列車編",type:"movie",year:2020,genres:["热血","战斗","少年"],rating:8.6,desc:"炭治郎一行人与炎柱炼狱杏寿郎在无限列车上与下弦之壹魇梦展开死斗。日本影史票房冠军。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=鬼灭之刃+无限列车",color:"#fb7299"}]},
+  {id:107,title:"天空之城",title_jp:"天空の城ラピュタ",type:"movie",year:1986,genres:["奇幻","冒险","科幻"],rating:9.1,desc:"少女希达从天而降,与少年巴鲁一同寻找传说中的飞行岛拉普达。宫崎骏早年的经典之作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=天空之城",color:"#fb7299"}]},
+  {id:108,title:"幽灵公主",title_jp:"もののけ姫",type:"movie",year:1997,genres:["奇幻","冒险","环保"],rating:8.9,desc:"少年阿席达卡被诅咒后前往西方寻找解救之法,卷入了人类与森林诸神之间的战争。宫崎骏史诗级作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=幽灵公主",color:"#fb7299"}]},
+  {id:109,title:"借东西的小人阿莉埃蒂",title_jp:"借りぐらしのアリエッティ",type:"movie",year:2010,genres:["奇幻","治愈","日常"],rating:8.6,desc:"患有心脏病的少年翔在乡下别墅静养时,发现了住在地板下的小人族少女阿莉埃蒂。吉卜力工作室出品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=借东西的小人阿莉埃蒂",color:"#fb7299"}]},
+  {id:110,title:"秒速5厘米",title_jp:"秒速5センチメートル",type:"movie",year:2007,genres:["爱情","青春","文艺"],rating:8.4,desc:"远野贵树与篠原明里从小学相识,因搬家而分离,多年后在火车道口擦肩而过。新海诚早期代表作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=秒速5厘米",color:"#fb7299"}]},
+
+  // ===== 日剧补充分界线 =====
+  {id:111,title:"凪的新生活",title_jp:"凪のお暇",type:"drama",year:2019,genres:["治愈","人生","喜剧"],rating:8.8,desc:"28岁的 OL 大岛凪在职场和恋爱中总是察言观色、讨好他人,一次打击后她辞掉工作、甩了男友,搬到乡下开始了「重启人生」的假期。黑木华主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=凪的新生活",color:"#fb7299"}]},
+  {id:112,title:"三年A班",title_jp:"3年A組-今から皆さんは、人質です-",type:"drama",year:2019,genres:["悬疑","校园","社会"],rating:8.6,desc:"毕业前10天,班主任柊一飒将全班29名学生扣为人质,揭开一名学生自杀背后的真相。菅田将晖主演,对网络暴力的深刻拷问。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=三年A班",color:"#fb7299"}]},
+  {id:113,title:"神探伽利略",title_jp:"ガリレオ",type:"drama",year:2007,genres:["推理","物理","悬疑"],rating:8.5,desc:"天才物理学家汤川学运用科学原理破解各种看似超自然的神秘案件。福山雅治、柴崎幸主演,东野圭吾原作改编。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=神探伽利略",color:"#fb7299"}]},
+  {id:114,title:"为了N",title_jp:"Nのために",type:"drama",year:2014,genres:["悬疑","爱情","人性"],rating:8.8,desc:"一桩高级公寓杀人案,四个名字里都有N的年轻人,各自为了心中那个N而编织谎言。荣仓奈奈、洼田正孝、贺来贤人主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=为了N",color:"#fb7299"}]},
+  {id:115,title:"一公升的泪",title_jp:"1リットルの涙",type:"drama",year:2005,genres:["励志","疾病","青春"],rating:9.0,desc:"15岁的池内亚也被诊断出脊髓小脑变性症,身体逐渐失去控制,但她用尽全力活下去。泽尻英龙华主演,每集都让人泪流满面。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=一公升的泪",color:"#fb7299"}]},
+  {id:116,title:"野猪大改造",title_jp:"野ブタ。をプロデュース",type:"drama",year:2005,genres:["校园","青春","友情"],rating:8.5,desc:"两个男生帮助内向转校生「野猪」小谷信子改变形象、成为校园人气人物的青春故事。龟梨和也、山下智久、堀北真希主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=野猪大改造",color:"#fb7299"}]},
+  {id:117,title:"Code Blue",title_jp:"コード・ブルー",type:"drama",year:2008,genres:["医疗","急救","青春"],rating:8.5,desc:"四名年轻的急救直升机实习医生在极限环境下成长的故事。山下智久、新垣结衣、户田惠梨香主演,经典医疗剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=Code+Blue",color:"#fb7299"}]},
+  {id:118,title:"99.9刑事专门律师",title_jp:"99.9-刑事専門弁護士-",type:"drama",year:2016,genres:["律政","推理","喜剧"],rating:8.4,desc:"在99.9%有罪的日本刑事案件中,律师深山大翔只为寻找那0.1%无罪的可能性而拼命。松本润主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=99.9刑事专门律师",color:"#fb7299"}]},
+  {id:119,title:"行骗天下JP",title_jp:"コンフィデンスマンJP",type:"drama",year:2018,genres:["喜剧","犯罪","欺诈"],rating:8.7,desc:"三名欺诈师达子、少爷和理查德,用巧妙的骗术从贪婪的有钱人手中骗取钱财。长泽雅美主演,每一集都反转不断。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=行骗天下JP",color:"#fb7299"}]},
+  {id:120,title:"我的恐怖妻子",title_jp:"僕のヤバイ妻",type:"drama",year:2016,genres:["悬疑","惊悚","婚姻"],rating:9.1,desc:"丈夫企图毒杀富有的妻子,妻子发现后展开一连串高智商反击。木村佳乃主演,每一集都让人心惊肉跳的悬疑神作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=我的恐怖妻子",color:"#fb7299"}]},
+  {id:121,title:"孤独的美食家",title_jp:"孤独のグルメ",type:"drama",year:2012,genres:["美食","治愈","日常"],rating:9.3,desc:"杂货商井之头五郎在拜访客户之余,独自在日本各地的街头小店享受美食。松重丰主演,最治愈的下饭剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=孤独的美食家",color:"#fb7299"}]},
+  {id:122,title:"HERO",title_jp:"HERO",type:"drama",year:2001,genres:["律政","职场","喜剧"],rating:8.8,desc:"不走寻常路的检察官久利生公平,与东京地检城西支部的同事们一起侦查案件。木村拓哉、松隆子主演,经典律政剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=HERO+日剧",color:"#fb7299"}]},
+  {id:123,title:"约会～恋爱究竟是什么呢～",title_jp:"デート〜恋とはどんなものかしら〜",type:"drama",year:2015,genres:["爱情","喜剧"],rating:8.3,desc:"理科女公务员与沉迷文学的宅男,两个完全没有恋爱经验的人尝试「契约结婚」,闹出一系列笑话。杏、长谷川博己主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=约会恋爱究竟是什么呢",color:"#fb7299"}]},
+  {id:124,title:"产科医鸿鸟",title_jp:"コウノドリ",type:"drama",year:2015,genres:["医疗","产科","温情"],rating:8.9,desc:"产科医生鸿鸟樱以温柔的方式迎接每一个新生命的诞生,同时也面对许多社会的残酷现实。绫野刚主演,每集都让人感动。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=产科医鸿鸟",color:"#fb7299"}]},
+  {id:125,title:"重版出来!",title_jp:"重版出来!",type:"drama",year:2016,genres:["职场","出版","热血"],rating:9.1,desc:"前柔道运动员黑泽心加入漫画周刊编辑部,凭借热血和努力为漫画家们带来「重版出来」的奇迹。黑木华主演,燃到爆。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=重版出来",color:"#fb7299"}]},
+  {id:126,title:"家族游戏",title_jp:"家族ゲーム",type:"drama",year:2013,genres:["家庭","悬疑","人性"],rating:8.8,desc:"一名神秘家庭教师吉本荒野被请来管教问题少年,却用极端手段逐渐瓦解了这个表面完美的家庭。樱井翔主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=家族游戏+日剧",color:"#fb7299"}]},
+  {id:127,title:"失恋巧克力职人",title_jp:"失恋ショコラティエ",type:"drama",year:2014,genres:["爱情","美食","喜剧"],rating:8.1,desc:"被心仪女生拒绝的巧克力职人小动爽太,一边为她做巧克力,一边周旋于各种女性之间。松本润、石原里美主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=失恋巧克力职人",color:"#fb7299"}]},
+  {id:128,title:"SPEC",title_jp:"SPEC〜警視庁公安部公安第五課 未詳事件特別対策係事件簿〜",type:"drama",year:2010,genres:["悬疑","科幻","超能力"],rating:8.5,desc:"IQ201的天才女警当麻纱绫与暴力刑警搭档,调查与超能力者SPEC有关的未解案件。户田惠梨香、加濑亮主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=SPEC+日剧",color:"#fb7299"}]},
+  {id:129,title:"BOSS",title_jp:"BOSS",type:"drama",year:2009,genres:["刑侦","职场","喜剧"],rating:8.5,desc:"40岁从美国归来的女刑警大泽绘里子,带领一帮问题警员组成特别犯罪对策室。天海祐希主演,霸气十足。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=BOSS+日剧+天海祐希",color:"#fb7299"}]},
+  {id:130,title:"自恋刑警",title_jp:"うぬぼれ刑事",type:"drama",year:2010,genres:["喜剧","刑侦","爱情"],rating:8.3,desc:"每破一个案子就会爱上女嫌犯的自恋刑警,在恋与不恋之间纠结的搞笑刑侦剧。长濑智也主演,宫藤官九郎编剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=自恋刑警",color:"#fb7299"}]},
+  {id:131,title:"监狱里的公主大人",title_jp:"監獄のお姫さま",type:"drama",year:2017,genres:["喜剧","悬疑","女性"],rating:8.3,desc:"一群性格迥异的女性在监狱中结识,出狱后联手策划绑架,为入狱的同伴复仇。小泉今日子主演,宫藤官九郎编剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=监狱里的公主大人",color:"#fb7299"}]},
+  {id:132,title:"民王",title_jp:"民王",type:"drama",year:2015,genres:["喜剧","政治","身体互换"],rating:8.5,desc:"日本首相与笨蛋儿子灵魂互换,窝囊儿子要代替父亲处理国家大事,威严父亲则要在求职路上摸爬滚打。远藤宪一、菅田将晖主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=民王",color:"#fb7299"}]},
+  {id:133,title:"dele",title_jp:"dele",type:"drama",year:2018,genres:["悬疑","科技","人性"],rating:8.6,desc:"轮椅上的神秘男子坂上圭司经营着一家特殊公司,在委托人死后删除其指定数据,却在每次删除时发现秘密。山田孝之、菅田将晖主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=dele+日剧",color:"#fb7299"}]},
+  {id:134,title:"继母与女儿的蓝调",title_jp:"義母と娘のブルース",type:"drama",year:2018,genres:["家庭","温情","喜剧"],rating:8.7,desc:"工作狂继母亚希子用职场思维笨拙地经营与继女的关系,十年间两人从隔阂到相互理解。绫濑遥主演,又哭又笑。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=继母与女儿的蓝调",color:"#fb7299"}]},
+  {id:135,title:"最爱",title_jp:"最愛",type:"drama",year:2021,genres:["悬疑","爱情","犯罪"],rating:7.2,desc:"15年后,企业家真田梨央因一桩杀人案与初恋对象刑警宫崎大辉重逢。吉高由里子主演,为爱守密的悬疑爱情。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=最爱+日剧+吉高",color:"#fb7299"}]},
+  {id:136,title:"勿言推理",title_jp:"ミステリと言う勿れ",type:"drama",year:2022,genres:["推理","治愈"],rating:8.3,desc:"天然卷大学生久能整凭借超强观察力和共情力,在闲聊中破解一桩桩案件。菅田将晖主演,台词量超大但句句戳心。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=勿言推理",color:"#fb7299"}]},
+  {id:137,title:"女子警察的逆袭",title_jp:"ハコヅメ〜たたかう!交番女子〜",type:"drama",year:2021,genres:["喜剧","职场","女性"],rating:8.6,desc:"两个性格迥异的女巡警在派出所里处理各种奇葩案件和日常琐事。户田惠梨香、永野芽郁主演,又燃又好笑。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=女子警察的逆袭",color:"#fb7299"}]},
+  {id:138,title:"宽松世代又如何",title_jp:"ゆとりですがなにか",type:"drama",year:2016,genres:["喜剧","职场","人生"],rating:8.6,desc:"三个出生于宽松世代(1987年后)的年轻人,在职场和生活中屡遭挫折,磕磕绊绊地成长。冈田将生、松坂桃李、柳乐优弥主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=宽松世代又如何",color:"#fb7299"}]},
+  {id:139,title:"Byplayers",title_jp:"バイプレイヤーズ",type:"drama",year:2017,genres:["喜剧","伪纪录片"],rating:8.5,desc:"六位日本影视圈知名配角演员在同一屋檐下同居生活的伪纪录片式喜剧。远藤宪一、松重丰、光石研等实力派演员本色出演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=Byplayers",color:"#fb7299"}]},
+  {id:140,title:"古畑任三郎",title_jp:"古畑任三郎",type:"drama",year:1994,genres:["推理","警匪","倒叙"],rating:9.4,desc:"每集开头先展示凶手和犯罪过程,再由绅士侦探古畑任三郎通过细致观察找出破绽将其绳之以法。田村正和主演,日剧推理的标杆。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=古畑任三郎",color:"#fb7299"}]},
+  {id:141,title:"派遣员的品格",title_jp:"ハケンの品格",type:"drama",year:2007,genres:["职场","女性","喜剧"],rating:8.7,desc:"超级派遣员大前春子拥有无数技能证书,时薪3000日元,每天准时下班绝不加班。筱原凉子主演,职场人的理想化身。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=派遣员的品格",color:"#fb7299"}]},
+  {id:142,title:"恋爱世纪",title_jp:"ラブジェネレーション",type:"drama",year:1997,genres:["爱情","职场","经典"],rating:8.5,desc:"广告公司里,自由奔放的片桐哲平与认真固执的上杉理子从互看不顺眼到相爱的经典爱情故事。木村拓哉、松隆子主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=恋爱世纪",color:"#fb7299"}]},
+  {id:143,title:"冰上恋人",title_jp:"プライド",type:"drama",year:2004,genres:["爱情","运动","冰球"],rating:8.4,desc:"职业冰球队队长里中春,在赛场上冷酷无情,却为一个普通的OL动摇了内心的「骄傲」。木村拓哉、竹内结子主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=冰上恋人+Pride",color:"#fb7299"}]},
+  {id:144,title:"白夜行",title_jp:"白夜行",type:"drama",year:2006,genres:["悬疑","爱情","黑暗"],rating:8.3,desc:"两个孩子在童年犯下命案,从此走上一条无法回头的黑暗之路。山田孝之、绫濑遥主演,东野圭吾代表作改编。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=白夜行+日剧",color:"#fb7299"}]},
+  {id:145,title:"流星之绊",title_jp:"流星の絆",type:"drama",year:2008,genres:["悬疑","亲情","诈骗"],rating:8.5,desc:"三兄妹的父母被杀后,为了生存成为诈骗犯,同时暗中追查当年的凶手。二宫和也、锦户亮、户田惠梨香主演,宫藤官九郎编剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=流星之绊",color:"#fb7299"}]},
+  {id:146,title:"信长协奏曲",title_jp:"信長協奏曲",type:"drama",year:2014,genres:["穿越","战国","喜剧"],rating:8.0,desc:"高中生三郎意外穿越到战国时代,因长相酷似织田信长而被拉去当替身,用现代知识在战国乱世中求生。小栗旬主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=信长协奏曲",color:"#fb7299"}]},
+  {id:147,title:"问题餐厅",title_jp:"問題のあるレストラン",type:"drama",year:2015,genres:["女性","职场","美食"],rating:8.4,desc:"一群在职场上遭遇性别歧视的女性,在屋顶上开了一家属于自己的餐厅。真木阳子主演,坂元裕二编剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=问题餐厅",color:"#fb7299"}]},
+  {id:148,title:"明天，妈妈不在",title_jp:"明日、ママがいない",type:"drama",year:2014,genres:["儿童","社会","温情"],rating:8.7,desc:"一群在儿童养护机构生活的孩子们,在等待被收养的过程中,用各自的方式对抗命运。芦田爱菜主演,童星们的演技炸裂。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=明天妈妈不在",color:"#fb7299"}]},
+
+  // ===== 日漫补充分界线 =====
+  {id:200,title:"JOJO的奇妙冒险",title_jp:"ジョジョの奇妙な冒険",type:"anime",year:2012,genres:["热血","战斗","冒险"],rating:9.2,desc:"乔斯达家族与迪奥之间跨越百年的宿命对决,独特的画风、战斗方式和名台词「我不做人了!」让JOJO自成一种文化。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=JOJO的奇妙冒险",color:"#fb7299"}]},
+  {id:201,title:"灵能百分百",title_jp:"モブサイコ100",type:"anime",year:2016,genres:["超能力","战斗","喜剧"],rating:9.4,desc:"拥有最强超能力的影山茂夫(通称龙套),却因不擅长表达感情而渴望平凡生活。ONE原作,骨头社制作的超高品质战斗番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=灵能百分百",color:"#fb7299"}]},
+  {id:202,title:"文豪野犬",title_jp:"文豪ストレイドッグス",type:"anime",year:2016,genres:["战斗","异能","文学"],rating:8.3,desc:"以日本文豪命名的异能者们在横滨展开势力争斗。太宰治、中原中也、芥川龙之介…角色和异能均取材自真实作家和作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=文豪野犬",color:"#fb7299"}]},
+  {id:203,title:"死亡笔记",title_jp:"DEATH NOTE",type:"anime",year:2006,genres:["悬疑","推理","超自然"],rating:9.2,desc:"天才高中生夜神月捡到一本死亡笔记,名字被写在上面的人会死。他与天才侦探L之间展开了一场智力与心理的巅峰对决。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=死亡笔记+动漫",color:"#fb7299"}]},
+  {id:204,title:"寄生兽",title_jp:"寄生獣 セイの格率",type:"anime",year:2014,genres:["科幻","恐怖","人性"],rating:9.0,desc:"神秘寄生虫入侵地球,高中生泉新一的右手被寄生兽「小右」占据,两者共生,在人类与寄生兽的战争中思考生命的意义。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=寄生兽",color:"#fb7299"}]},
+  {id:205,title:"约定的梦幻岛",title_jp:"約束のネバーランド",type:"anime",year:2019,genres:["悬疑","逃脱","黑暗"],rating:9.3,desc:"一群在孤儿院快乐生活的孩子们,发现了一个可怕的秘密——他们其实是被当作食物养大的。三人组策划史上最惊心动魄的大逃亡。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=约定的梦幻岛",color:"#fb7299"}]},
+  {id:206,title:"来自深渊",title_jp:"メイドインアビス",type:"anime",year:2017,genres:["冒险","黑暗","奇幻"],rating:9.0,desc:"在巨大洞穴「阿比斯」的底部到底有什么?少女莉可与机器人雷格一同向深渊深处前进。可爱画风下的残酷冒险,越往下越绝望。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=来自深渊",color:"#fb7299"}]},
+  {id:207,title:"辉夜大小姐想让我告白",title_jp:"かぐや様は告らせたい",type:"anime",year:2019,genres:["恋爱","喜剧","校园"],rating:9.3,desc:"在精英学校学生会中,会长白银御行与副会长四宫辉夜互相喜欢对方,但都高傲到不愿意先告白,于是展开了一场让对方先告白的头脑战。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=辉夜大小姐想让我告白",color:"#fb7299"}]},
+  {id:208,title:"游戏人生",title_jp:"ノーゲーム・ノーライフ",type:"anime",year:2014,genres:["异世界","智斗","游戏"],rating:8.8,desc:"天才游戏玩家兄妹空与白被召唤到一切由游戏决定的异世界,以「空白」之名挑战各种族的最强玩家。智商碾压的爽番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=游戏人生",color:"#fb7299"}]},
+  {id:209,title:"暗杀教室",title_jp:"暗殺教室",type:"anime",year:2015,genres:["校园","喜剧","科幻"],rating:8.7,desc:"毁灭了月球的黄色章鱼成为了3年E班的班主任,学生们必须在一年内暗杀他以拯救地球。杀老师与学生们之间的羁绊笑中带泪。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=暗杀教室",color:"#fb7299"}]},
+  {id:210,title:"齐木楠雄的灾难",title_jp:"斉木楠雄のΨ難",type:"anime",year:2016,genres:["喜剧","超能力","校园"],rating:9.2,desc:"拥有所有超能力的齐木楠雄只想安静地过平凡生活,但身边总聚集着一群奇葩,不断制造各种灾难级麻烦。吐槽密度最高的搞笑番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=齐木楠雄的灾难",color:"#fb7299"}]},
+  {id:211,title:"冰菓",title_jp:"氷菓",type:"anime",year:2012,genres:["推理","校园","日常"],rating:8.9,desc:"「节能主义」高中生折木奉太郎在学姐千反田爱瑠「我很好奇!」的推动下,解开一个个校园日常之谜。京阿尼出品,画面绝美。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=冰菓",color:"#fb7299"}]},
+  {id:212,title:"龙与虎",title_jp:"とらドラ!",type:"anime",year:2008,genres:["恋爱","校园","喜剧"],rating:8.8,desc:"面相凶恶的龙儿与娇小暴躁的「掌中老虎」大河互相暗恋对方的好友,在互助中不知不觉爱上了彼此。钉宫理惠配音,校园恋爱番的标杆。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=龙与虎",color:"#fb7299"}]},
+  {id:213,title:"CLANNAD",title_jp:"CLANNAD -クラナド-",type:"anime",year:2007,genres:["治愈","催泪","校园"],rating:9.4,desc:"不良少年冈崎朋也与体弱多病的古河渚相遇,从校园到社会,经历人生悲欢离合。第二季After Story公认「催泪核弹」,看完没有不哭的。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=CLANNAD",color:"#fb7299"}]},
+  {id:214,title:"未闻花名",title_jp:"あの日見た花の名前を僕達はまだ知らない。",type:"anime",year:2011,genres:["治愈","催泪","青春"],rating:9.1,desc:"童年好友面码去世后,五个小伙伴各自疏远。多年后面码以幽灵形态出现,只为完成未了的心愿。ED响起,纸巾不够用。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=未闻花名",color:"#fb7299"}]},
+  {id:215,title:"四月是你的谎言",title_jp:"四月は君の嘘",type:"anime",year:2014,genres:["音乐","爱情","催泪"],rating:9.3,desc:"钢琴天才有马公生因母亲去世而无法听清自己弹奏的声音,遇见活泼的小提琴手宫园薰后,他的世界重新拥有了色彩。春天里的最美谎言。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=四月是你的谎言",color:"#fb7299"}]},
+  {id:216,title:"Angel Beats!",title_jp:"Angel Beats!",type:"anime",year:2010,genres:["奇幻","催泪","战斗"],rating:8.5,desc:"死后世界的高中生们在校园里反抗「天使」,每个人都带着生前未了的心愿和遗憾。麻枝准剧本,前笑后泪的经典。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=Angel+Beats",color:"#fb7299"}]},
+  {id:217,title:"轻音少女",title_jp:"けいおん!",type:"anime",year:2009,genres:["音乐","日常","治愈"],rating:8.9,desc:"四个(后五个)高中女生在轻音部喝茶、吃点心、偶尔练琴的日常。京阿尼出品,把「萌」和「日常」做到极致的里程碑作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=轻音少女",color:"#fb7299"}]},
+  {id:218,title:"日常",title_jp:"日常",type:"anime",year:2011,genres:["喜剧","日常","校园"],rating:9.2,desc:"名字叫「日常」但处处都是非日常——会说话的黑猫、骑羊上学的少女、想当普通人的机器人。京阿尼的脑洞巅峰,每分钟都在爆笑。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=日常+动漫",color:"#fb7299"}]},
+  {id:219,title:"男子高中生的日常",title_jp:"男子高校生の日常",type:"anime",year:2012,genres:["喜剧","校园","日常"],rating:9.1,desc:"三个男子高中生每天都在做些看似很酷其实很蠢的事情。今天的风儿甚是喧嚣——名场面无数的经典搞笑番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=男子高中生的日常",color:"#fb7299"}]},
+  {id:220,title:"在下坂本，有何贵干?",title_jp:"坂本ですが?",type:"anime",year:2016,genres:["喜剧","校园"],rating:8.4,desc:"传说中的坂本同学,不管做什么事都帅到没朋友。擦黑板可以擦出艺术,被蜜蜂蜇可以摆出雕塑pose。史上最装逼男主。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=在下坂本有何贵干",color:"#fb7299"}]},
+  {id:221,title:"碧蓝之海",title_jp:"ぐらんぶる",type:"anime",year:2018,genres:["喜剧","潜水","大学"],rating:9.0,desc:"大学新生北原伊织被强迫加入潜水社,然而这个社团的主要活动是喝酒、裸奔和互相坑害。真正的潜水画面少得可怜但笑得停不下来。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=碧蓝之海",color:"#fb7299"}]},
+  {id:222,title:"欢迎来到实力至上主义的教室",title_jp:"ようこそ実力至上主義の教室へ",type:"anime",year:2017,genres:["校园","智斗","悬疑"],rating:8.2,desc:"在这所高中里,一切以实力说话。隐藏实力的绫小路清隆被分到最差的D班,在暗中操控一切。扮猪吃老虎的极致爽番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=欢迎来到实力至上主义的教室",color:"#fb7299"}]},
+  {id:223,title:"心理测量者",title_jp:"PSYCHO-PASS サイコパス",type:"anime",year:2012,genres:["科幻","反乌托邦","刑侦"],rating:9.0,desc:"在未来社会,每个人的心理状态都被量化,潜在犯罪者会被系统判定清除。刑警狡啮慎也与执行官槙岛圣护的对决,探讨正义的本质。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=心理测量者",color:"#fb7299"}]},
+  {id:224,title:"攻壳机动队",title_jp:"攻殻機動隊 STAND ALONE COMPLEX",type:"anime",year:2002,genres:["科幻","赛博朋克","刑侦"],rating:9.3,desc:"公元2030年,义体化技术普及的世界中,公安9课(通称攻壳机动队)对抗网络犯罪和科技恐怖主义。科幻动画的哲学巅峰。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=攻壳机动队",color:"#fb7299"}]},
+  {id:225,title:"星际牛仔",title_jp:"カウボーイビバップ",type:"anime",year:1998,genres:["科幻","太空","爵士"],rating:9.6,desc:"2071年,赏金猎人Spike和他的伙伴们在太空中流浪,追捕罪犯,逃避过去。渡边信一郎+菅野洋子,每个镜头都是艺术品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=星际牛仔",color:"#fb7299"}]},
+  {id:226,title:"黑执事",title_jp:"黒執事",type:"anime",year:2008,genres:["奇幻","英伦","黑暗"],rating:8.3,desc:"13岁的凡多姆海威伯爵夏尔与恶魔执事塞巴斯蒂安缔结契约,为复仇而活。华丽的英伦哥特风与精彩的剧情引人入胜。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=黑执事",color:"#fb7299"}]},
+  {id:227,title:"家庭教师",title_jp:"家庭教師ヒットマンREBORN!",type:"anime",year:2006,genres:["热血","战斗","少年"],rating:8.8,desc:"废柴中学生泽田纲吉在家教Reborn的调教下,成为彭格列家族第十代首领。从日常搞笑到热血战斗,经典长篇少年漫改。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=家庭教师+REBORN",color:"#fb7299"}]},
+  {id:228,title:"未来日记",title_jp:"未来日記",type:"anime",year:2011,genres:["悬疑","生存","黑暗"],rating:8.1,desc:"12名持有未来日记的人进行杀戮游戏,胜者将成为神。我妻由乃——动漫史上最著名的病娇角色——为保护男主可以杀掉任何人。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=未来日记",color:"#fb7299"}]},
+  {id:229,title:"关于我转生变成史莱姆这档事",title_jp:"転生したらスライムだった件",type:"anime",year:2018,genres:["异世界","奇幻","冒险"],rating:8.6,desc:"37岁上班族被刺死后转生到异世界成为一只史莱姆,却获得了各种逆天能力,开始建立自己的魔物王国。最成功的异世界爽番之一。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=关于我转生变成史莱姆这档事",color:"#fb7299"}]},
+  {id:230,title:"OVERLORD",title_jp:"オーバーロード",type:"anime",year:2015,genres:["异世界","黑暗","奇幻"],rating:8.7,desc:"游戏关服后,玩家铃木悟被困在游戏世界中,以自己扮演的魔王「安兹·乌尔·恭」的身份,带领NPC们征服世界。反派视角的异世界爽番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=OVERLORD",color:"#fb7299"}]},
+  {id:231,title:"为美好的世界献上祝福!",title_jp:"この素晴らしい世界に祝福を!",type:"anime",year:2016,genres:["异世界","喜剧","冒险"],rating:9.1,desc:"宅男佐藤和真死后带着女神阿库娅一起转生异世界,但整个队伍全是一群坑货。最搞笑的异世界番,每一集都能笑到肚子疼。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=为美好的世界献上祝福",color:"#fb7299"}]},
+  {id:232,title:"哥布林杀手",title_jp:"ゴブリンスレイヤー",type:"anime",year:2018,genres:["黑暗","战斗","奇幻"],rating:8.2,desc:"一个全身铠甲的男人,不接魔王任务、不屠龙,只猎杀哥布林。第一集就让人震撼的残酷异世界,用最硬核的方式演绎最底层的战斗。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=哥布林杀手",color:"#fb7299"}]},
+  {id:233,title:"无职转生",title_jp:"無職転生",type:"anime",year:2021,genres:["异世界","冒险","成长"],rating:8.9,desc:"34岁家里蹲死后转生到剑与魔法的世界,这一次他发誓要认真地活下去。从婴儿开始重新成长,异世界动画的制作天花板。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=无职转生",color:"#fb7299"}]},
+  {id:234,title:"五等分的新娘",title_jp:"五等分の花嫁",type:"anime",year:2019,genres:["恋爱","校园","后宫"],rating:8.1,desc:"贫穷学霸风太郎成为五胞胎姐妹的家庭教师,五个长得一模一样但性格迥异的美少女,最终会与谁牵手?恋爱喜剧的标杆之作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=五等分的新娘",color:"#fb7299"}]},
+  {id:235,title:"青春猪头少年不会梦到兔女郎学姐",title_jp:"青春ブタ野郎はバニーガール先輩の夢を見ない",type:"anime",year:2018,genres:["恋爱","奇幻","校园"],rating:9.0,desc:"高中生梓川咲太遇到了穿着兔女郎装在图书馆走动的学姐樱岛麻衣——除了他没人能看见她。一部披着轻小说外衣的深度青春故事。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=青春猪头少年不会梦到兔女郎学姐",color:"#fb7299"}]},
+  {id:236,title:"堀与宫村",title_jp:"ホリミヤ",type:"anime",year:2021,genres:["恋爱","校园","日常"],rating:8.8,desc:"在班级里光鲜亮丽的堀京子,和在校外戴耳环纹身的宫村伊澄,两人因一次偶然的放学后相遇,发现了彼此不为人知的一面。甜到牙疼。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=堀与宫村",color:"#fb7299"}]},
+  {id:237,title:"更衣人偶坠入爱河",title_jp:"その着せ替え人形は恋をする",type:"anime",year:2022,genres:["恋爱","Cosplay","日常"],rating:8.6,desc:"热爱制作雏人形的男生五条与喜欢Cosplay的辣妹海梦,因Cosplay制作而渐渐走近彼此。画面精美,Cosplay爱好者的狂欢。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=更衣人偶坠入爱河",color:"#fb7299"}]},
+  {id:238,title:"佐贺偶像是传奇",title_jp:"ゾンビランドサガ",type:"anime",year:2018,genres:["偶像","喜剧","僵尸"],rating:8.8,desc:"七个来自不同年代的僵尸被经纪人复活,组成偶像团体在日本各地展开活动。死过一次的她们,这一次要成为传奇。脑洞大开的偶像番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=佐贺偶像是传奇",color:"#fb7299"}]},
+  {id:239,title:"赛马娘",title_jp:"ウマ娘 プリティーダービー",type:"anime",year:2018,genres:["运动","竞技","励志"],rating:9.1,desc:"以真实赛马为原型的少女们奔跑、流泪、夺冠的故事。第二季更是公认的神作,不了解赛马也完全能看哭。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=赛马娘",color:"#fb7299"}]},
+  {id:240,title:"蓝色监狱",title_jp:"ブルーロック",type:"anime",year:2022,genres:["运动","足球","热血"],rating:8.5,desc:"日本足球协会召集300名高中前锋,关进「蓝色监狱」进行残酷淘汰,只为培养出世界第一的自私前锋。不是合作,是利己主义的胜利。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=蓝色监狱",color:"#fb7299"}]},
+  {id:241,title:"黑子的篮球",title_jp:"黒子のバスケ",type:"anime",year:2012,genres:["运动","篮球","热血"],rating:8.3,desc:"存在感极低的「幻之第六人」黑子哲也,与新搭档火神大我一起挑战奇迹的世代。超能力篮球的开创者,燃到飞起。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=黑子的篮球",color:"#fb7299"}]},
+  {id:242,title:"我推的孩子",title_jp:"【推しの子】",type:"anime",year:2023,genres:["悬疑","偶像","娱乐圈"],rating:9.0,desc:"人气偶像星野爱秘密生下双胞胎后,孩子也带着前世记忆转生。第一集90分钟直接封神,对日本娱乐圈生态的深度剖析。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=我推的孩子",color:"#fb7299"}]},
+  {id:243,title:"天国大魔境",title_jp:"天国大魔境",type:"anime",year:2023,genres:["科幻","悬疑","冒险"],rating:8.8,desc:"在崩坏的世界中,少年丸和少女贵留子寻找传说中的「天国」,墙内和墙外两条时间线交错展开。石黑正数原作,设定精巧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=天国大魔境",color:"#fb7299"}]},
+  {id:244,title:"夏日重现",title_jp:"サマータイムレンダ",type:"anime",year:2022,genres:["悬疑","轮回","战斗"],rating:9.0,desc:"网代慎平回到家乡小岛参加青梅竹马的葬礼,发现岛上存在一种名为「影子」的怪物,每一次死亡都会让他重新回到那天。高智商轮回智斗。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=夏日重现",color:"#fb7299"}]},
+  {id:245,title:"奇巧计程车",title_jp:"オッドタクシー",type:"anime",year:2021,genres:["悬疑","群像","社会"],rating:9.4,desc:"沉默寡言的海象出租车司机小户川,载着各色乘客,看似无关的对话最终串联成一个惊人的真相。年度冷门神作,看完最后一集头皮发麻。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=奇巧计程车",color:"#fb7299"}]},
+  {id:246,title:"漂流少年",title_jp:"Sonny Boy",type:"anime",year:2021,genres:["科幻","哲学","实验"],rating:8.4,desc:"36名学生连同整个学校一起漂流到异次元,每个人都觉醒了不同能力,在无序的世界中寻找规则和回家的路。充满哲学思辨的实验性作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=漂流少年",color:"#fb7299"}]},
+  {id:247,title:"我心危",title_jp:"僕の心のヤバイやつ",type:"anime",year:2023,genres:["恋爱","校园","日常"],rating:9.0,desc:"中二病少年市川京太郎和天真烂漫的班花山田杏奈,因图书馆的偶遇而萌发的纯真恋情。从阴暗自闭到温暖治愈,2023年最甜狗粮番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=我心里危险的东西",color:"#fb7299"}]},
+  {id:248,title:"魔女之旅",title_jp:"魔女の旅々",type:"anime",year:2020,genres:["奇幻","冒险","公路"],rating:8.4,desc:"天才魔女伊蕾娜周游世界,在各国邂逅不同的人与故事。时而温馨,时而残酷,每一集都是独立故事,像魔法版的奇诺之旅。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=魔女之旅",color:"#fb7299"}]},
+  {id:249,title:"魔法少女小圆",title_jp:"魔法少女まどか☆マギカ",type:"anime",year:2011,genres:["黑暗","魔法少女","致郁"],rating:9.0,desc:"看似普通的魔法少女动画,第三集突然大反转。爱的战士虚渊玄+新房昭之+梶浦由记,将魔法少女题材彻底颠覆的里程碑作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=魔法少女小圆",color:"#fb7299"}]},
+  {id:250,title:"死神千年血战篇",title_jp:"BLEACH 千年血戦篇",type:"anime",year:2022,genres:["热血","战斗","少年"],rating:9.0,desc:"BLEACH最终章,灭却师之王友哈巴赫率领无形帝国进攻尸魂界。黑崎一护的最终决战,制作水准全面进化,老粉泪流满面。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=死神千年血战篇",color:"#fb7299"},{name:"优酷",url:"https://so.youku.com/search_video/q_死神千年血战篇",color:"#00b1ff"}]},
+
+  // ===== 动画电影补充分界线 =====
+  {id:300,title:"崖上的波妞",title_jp:"崖の上のポニョ",type:"movie",year:2008,genres:["奇幻","治愈","子供向"],rating:8.5,desc:"一条小金鱼波妞渴望变成人类,与5岁男孩宗介之间纯真的友情。宫崎骏献给所有孩子的最纯真礼物。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=崖上的波妞",color:"#fb7299"}]},
+  {id:301,title:"起风了",title_jp:"風立ちぬ",type:"movie",year:2013,genres:["历史","爱情","传记"],rating:8.0,desc:"以零式战斗机设计师堀越二郎为原型,讲述一个热爱飞机的少年如何在动荡时代追逐梦想。宫崎骏的收官之作,献给所有热爱天空的人。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=起风了",color:"#fb7299"}]},
+  {id:302,title:"红猪",title_jp:"紅の豚",type:"movie",year:1992,genres:["冒险","飞行","喜剧"],rating:8.5,desc:"一战时期的意大利,被诅咒变成猪脸的飞行员波鲁克在亚得里亚海上空与空贼战斗。宫崎骏最「成人化」的浪漫主义作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=红猪",color:"#fb7299"}]},
+  {id:303,title:"魔女宅急便",title_jp:"魔女の宅急便",type:"movie",year:1989,genres:["奇幻","成长","治愈"],rating:8.7,desc:"13岁的小魔女琪琪带着黑猫吉吉来到陌生城市修行,用飞行魔法开了一家快递服务。每个年轻人都会经历的成长与迷茫。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=魔女宅急便",color:"#fb7299"}]},
+  {id:304,title:"萤火虫之墓",title_jp:"火垂るの墓",type:"movie",year:1988,genres:["战争","悲剧","催泪"],rating:9.0,desc:"二战末期,14岁的少年清太和4岁的妹妹节子在战火中失去父母,两人相依为命却步步走向悲剧。高畑勋作品,反战动画的巅峰。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=萤火虫之墓",color:"#fb7299"}]},
+  {id:305,title:"言叶之庭",title_jp:"言の葉の庭",type:"movie",year:2013,genres:["爱情","文艺","雨天"],rating:8.4,desc:"高中生秋月孝雄在雨天的公园里遇见了神秘的雪野百香里,两人在雨中建立了只属于那个亭子的羁绊。新海诚最精致的短片,每一帧都是壁纸。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=言叶之庭",color:"#fb7299"}]},
+  {id:306,title:"声之形",title_jp:"聲の形",type:"movie",year:2016,genres:["校园","人性","治愈"],rating:8.2,desc:"曾经霸凌听障少女西宫硝子的少年石田将也,多年后决心赎罪。关于校园霸凌、沟通与救赎的深刻作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=声之形",color:"#fb7299"}]},
+  {id:307,title:"穿越时空的少女",title_jp:"時をかける少女",type:"movie",year:2006,genres:["科幻","青春","爱情"],rating:8.7,desc:"高中生真琴意外获得穿越时空的能力,用跳跃时间来解决日常烦恼,却发现每一次改变都会带来更大的代价。细田守作品,Time waits for no one。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=穿越时空的少女",color:"#fb7299"}]},
+  {id:308,title:"狼的孩子雨和雪",title_jp:"おおかみこどもの雨と雪",type:"movie",year:2012,genres:["亲情","奇幻","成长"],rating:8.7,desc:"女主花爱上狼人并生下一对姐弟,狼人父亲去世后,她独自抚养两个可化身为狼的孩子,在乡间经历了他们成长中的抉择。细田守作品,伟大的母爱赞歌。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=狼的孩子雨和雪",color:"#fb7299"}]},
+  {id:309,title:"夏日大作战",title_jp:"サマーウォーズ",type:"movie",year:2009,genres:["科幻","家庭","喜剧"],rating:8.6,desc:"数学天才少年健二在虚拟世界OZ中意外成为黑客嫌疑人,与学姐一家共同对抗失控的AI。细田守作品,热血又温情的大家庭故事。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=夏日大作战",color:"#fb7299"}]},
+  {id:310,title:"你好世界",title_jp:"HELLO WORLD",type:"movie",year:2019,genres:["科幻","爱情","反转"],rating:7.6,desc:"在未来的京都,16岁的坚书直实遇见了10年后的自己,被要求拯救即将因意外陷入昏迷的同班同学瑠璃。层层嵌套的结局让人意想不到。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=HELLO+WORLD+动画电影",color:"#fb7299"}]},
+  {id:311,title:"烟花",title_jp:"打ち上げ花火、下から見るか?横から見るか?",type:"movie",year:2017,genres:["爱情","青春","奇幻"],rating:5.8,desc:"暑假的最后一天,一群少年争论烟花从侧面看是圆的还是扁的,典道一次次「如果当时」的幻想中穿越。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=烟花+动画电影",color:"#fb7299"}]},
+
+  // ===== 更多日剧 =====
+  {id:150,title:"产科医鸿鸟2",title_jp:"コウノドリ2",type:"drama",year:2017,genres:["医疗","产科","温情"],rating:9.0,desc:"鸿鸟樱继续以温柔的方式迎接新生命,同时直面更多尖锐的社会问题。第二季比第一季更加催泪。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=产科医鸿鸟+第二季",color:"#fb7299"}]},
+  {id:151,title:"半泽直树2",title_jp:"半沢直樹2",type:"drama",year:2020,genres:["职场","金融","复仇"],rating:9.3,desc:"半泽直树被调职到东京中央证券后,再次遭遇企业阴谋,与政经界大鳄展开新的对抗。等了7年,加倍奉还的力度也加倍。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=半泽直树2",color:"#fb7299"}]},
+  {id:152,title:"Good Luck!!",title_jp:"GOOD LUCK!!",type:"drama",year:2003,genres:["职场","飞行员","爱情"],rating:8.5,desc:"年轻副驾驶员新海元怀抱着成为机长的梦想,在工作和爱情中不断成长。木村拓哉主演,蓝天之上最燃的职场剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=Good+Luck+木村拓哉",color:"#fb7299"}]},
+  {id:153,title:"美丽人生",title_jp:"Beautiful Life ふたりでいた日々",type:"drama",year:2000,genres:["爱情","疾病","经典"],rating:9.0,desc:"才华横溢的发型师冲岛佟二与坐轮椅的图书管理员町田杏子之间感人至深的爱情故事。木村拓哉、常盘贵子主演。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=美丽人生+木村拓哉",color:"#fb7299"}]},
+  {id:154,title:"极道鲜师2",title_jp:"ごくせん2",type:"drama",year:2005,genres:["校园","喜剧","热血"],rating:8.8,desc:"山口久美子在新学校继续用她的方式管教问题学生,这次的学生阵容堪称梦幻——龟梨和也、赤西仁、速水重道等。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=极道鲜师2",color:"#fb7299"}]},
+  {id:155,title:"庶务二课",title_jp:"ショムニ",type:"drama",year:1998,genres:["职场","喜剧","女性"],rating:8.6,desc:"一群被发配到「庶务二课」的OL们,用各自独特的技能和不羁的态度解决公司各种危机。江角真纪子主演,职场喜剧的经典。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=庶务二课",color:"#fb7299"}]},
+  {id:156,title:"大和抚子",title_jp:"やまとなでしこ",type:"drama",year:2000,genres:["爱情","喜剧","空姐"],rating:8.3,desc:"一心想嫁入豪门的空姐神野樱子,误打误撞爱上了贫穷的数学家。松岛菜菜子主演,关于爱情与物质的经典拷问。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=大和抚子+日剧",color:"#fb7299"}]},
+  {id:157,title:"池袋西口公园",title_jp:"池袋ウエストゲートパーク",type:"drama",year:2000,genres:["悬疑","青春","社会"],rating:8.6,desc:"一群池袋街头的年轻人卷入各种暴力事件,努力找寻真相。长濑智也、山下智久、洼冢洋介主演,宫藤官九郎编剧,千禧年经典。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=池袋西口公园",color:"#fb7299"}]},
+  {id:158,title:"Orange Days",title_jp:"オレンジデイズ",type:"drama",year:2004,genres:["青春","校园","爱情"],rating:8.5,desc:"大四学生结城櫂与失聪的钢琴系学生萩尾沙绘在校园的最后一年,一起面对毕业、就职和爱情。妻夫木聪、柴崎幸主演,北川悦吏子编剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=Orange+Days",color:"#fb7299"}]},
+  {id:159,title:"在世界中心呼唤爱",title_jp:"世界の中心で、愛をさけぶ",type:"drama",year:2004,genres:["爱情","催泪","疾病"],rating:8.7,desc:"松本朔太郎忘不了高中时因白血病去世的初恋女友亚纪,多年后回到故乡面对过去。山田孝之、绫濑遥主演,纯爱剧的巅峰。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=在世界中心呼唤爱+日剧",color:"#fb7299"}]},
+  {id:160,title:"魔王",title_jp:"魔王",type:"drama",year:2008,genres:["悬疑","复仇","黑暗"],rating:8.2,desc:"少年时代的悲剧让兄弟俩走上完全相反的道路——一个成为律师,一个成为杀人魔。大野智、生田斗真主演,韩剧改编。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=魔王+日剧+大野智",color:"#fb7299"}]},
+  {id:161,title:"无法成为野兽的我们",title_jp:"獣になれない私たち",type:"drama",year:2018,genres:["职场","爱情","人生"],rating:7.7,desc:"职场女性深海晶过着被所有人期待压垮的生活,在酒吧遇见了毒舌会计师根元恒星。新垣结衣、松田龙平主演,野木亚纪子编剧。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=无法成为野兽的我们",color:"#fb7299"}]},
+
+  // ===== 更多日漫 =====
+  {id:260,title:"魔法禁书目录",title_jp:"とある魔術の禁書目録",type:"anime",year:2008,genres:["科幻","魔法","超能力"],rating:7.5,desc:"学园都市中,不幸少年上条当麻拥有右手「幻想杀手」,遇到从魔法世界而来的修女茵蒂克丝后,卷入了科学与魔法的冲突。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=魔法禁书目录",color:"#fb7299"}]},
+  {id:261,title:"物语系列",title_jp:"〈物語〉シリーズ",type:"anime",year:2009,genres:["奇幻","青春","意识流"],rating:8.9,desc:"高中生阿良良木历与各种「怪异」附身的少女们相遇相救。新房昭之的独特视觉风格+西尾维新的大量对白,独一无二的动画体验。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=化物语",color:"#fb7299"}]},
+  {id:262,title:"混沌武士",title_jp:"サムライチャンプルー",type:"anime",year:2004,genres:["武士","冒险","HIPHOP"],rating:9.3,desc:"江户时代的日本,三个性格迥异的人结伴旅行寻找「向日葵味道的武士」。渡边信一郎+菅野洋子,江户武士+现代HIPHOP的神奇混搭。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=混沌武士",color:"#fb7299"}]},
+  {id:263,title:"多罗罗",title_jp:"どろろ",type:"anime",year:2019,genres:["战国","黑暗","冒险"],rating:8.6,desc:"战国时代,百鬼丸的身体器官被父亲献给魔神,他踏上斩除魔神夺回身体之路。手冢治虫原作,MAPPA重制,黑暗又深刻。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=多罗罗",color:"#fb7299"}]},
+  {id:264,title:"亚人",title_jp:"亜人",type:"anime",year:2016,genres:["科幻","战斗","黑暗"],rating:8.5,desc:"不死不灭的新物种「亚人」被发现,高中生永井圭在一次事故后发现自己就是亚人,随即被政府追捕。3D制作的巅峰,动作场面极佳。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=亚人",color:"#fb7299"}]},
+  {id:265,title:"狂赌之渊",title_jp:"賭ケグルイ",type:"anime",year:2017,genres:["赌博","校园","黑暗"],rating:8.2,desc:"在精英学校私立百花王学园,一切以赌博决定地位。转校生蛇喰梦子是个享受赌博风险的「赌狂」。颜艺之渊,看得人肾上腺素飙升。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=狂赌之渊",color:"#fb7299"}]},
+  {id:266,title:"宝石之国",title_jp:"宝石の国",type:"anime",year:2017,genres:["奇幻","战斗","成长"],rating:8.5,desc:"28个宝石生命体在遥远的未来对抗来自月球的「月人」。磷叶石在一次次战斗中不断失去身体却不断变强的故事。3D动画的极致。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=宝石之国",color:"#fb7299"}]},
+  {id:267,title:"少女终末旅行",title_jp:"少女終末旅行",type:"anime",year:2017,genres:["末日","治愈","哲学"],rating:9.1,desc:"在文明毁灭后的世界,两个少女千都与尤莉骑着履带摩托漫无目的地旅行,思考生命与存在的意义。安静而深沉的作品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=少女终末旅行",color:"#fb7299"}]},
+  {id:268,title:"比宇宙更远的地方",title_jp:"宇宙よりも遠い場所",type:"anime",year:2018,genres:["青春","冒险","南极"],rating:9.4,desc:"四个高中女生为了各自的原因,决定一起去南极科考。没有超能力没有异世界,就是四个普通女孩追逐梦想的故事,燃到炸裂。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=比宇宙更远的地方",color:"#fb7299"}]},
+  {id:269,title:"巴克·亚罗",title_jp:"バック・アロウ",type:"anime",year:2021,genres:["机甲","热血","神展开"],rating:8.4,desc:"从天而降的裸体神秘男子巴克·亚罗,脑袋里只有一句话——「我要回墙壁之外」。中岛一基编剧,每一集都在疯狂大反转的原创机甲番。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=巴克亚罗",color:"#fb7299"}]},
+  {id:270,title:"不死少女的谋杀闹剧",title_jp:"アンデッドガール・マーダーファルス",type:"anime",year:2023,genres:["推理","奇幻","欧洲"],rating:8.3,desc:"19世纪末,只有头颅的不死侦探轮堂鸦夜与保镖「鬼之杀手」在欧陆各地解决与怪物相关的案件。华丽的推理与奇幻冒险。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=不死少女的谋杀闹剧",color:"#fb7299"}]},
+  {id:271,title:"跃动青春",title_jp:"スキップとローファー",type:"anime",year:2023,genres:["校园","青春","日常"],rating:8.8,desc:"从小镇来到东京读高中的学霸美津未,带着满满的干劲却闹出一堆笑话,与帅气的同学志摩之间的友情与心动。清新自然的青春群像。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=跃动青春",color:"#fb7299"}]},
+  {id:272,title:"妖精的尾巴",title_jp:"FAIRY TAIL",type:"anime",year:2009,genres:["热血","魔法","冒险"],rating:8.1,desc:"魔法公会「妖精的尾巴」的纳兹与伙伴们,在魔法世界中经历各种冒险。家族羁绊是永恒的主题,燃与泪并存的少年漫。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=妖精的尾巴",color:"#fb7299"}]},
+  {id:273,title:"小林家的龙女仆",title_jp:"小林さんちのメイドラゴン",type:"anime",year:2017,genres:["日常","奇幻","喜剧"],rating:8.5,desc:"OL小林的家里突然来了一条自称是龙的少女托尔,要给她当女仆。人与龙（以及各种奇怪生物）的搞笑同居日常。京阿尼出品。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=小林家的龙女仆",color:"#fb7299"}]},
+  {id:274,title:"黄金神威",title_jp:"ゴールデンカムイ",type:"anime",year:2018,genres:["冒险","历史","美食"],rating:9.2,desc:"日俄战争退伍兵杉元与阿伊努族少女阿希莉帕在北海道的荒野中寻找黄金宝藏。热血、搞笑、美食、阿伊努文化,一锅大杂烩但巨好看。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=黄金神威",color:"#fb7299"}]},
+  {id:275,title:"吹响吧!上低音号",title_jp:"響け!ユーフォニアム",type:"anime",year:2015,genres:["音乐","青春","校园"],rating:9.2,desc:"北宇治高中吹奏乐部的新生们,怀揣着全国金奖的梦想,在练习和比赛中挥洒青春与泪水。京阿尼的另一部神作。",platforms:[{name:"Bilibili",url:"https://search.bilibili.com/all?keyword=吹响吧上低音号",color:"#fb7299"}]}
+];
+
+// ==================== FALLBACK PLATFORMS ====================
+var FALLBACK_PLATFORMS = [
+  {name:"Bilibili",url:"https://search.bilibili.com/all?keyword={q}",color:"#fb7299",icon:"📺"},
+  {name:"爱奇艺",url:"https://so.iqiyi.com/so/q_{q}",color:"#00be06",icon:"📺"},
+  {name:"优酷",url:"https://so.youku.com/search_video/q_{q}",color:"#00b1ff",icon:"📺"},
+  {name:"腾讯视频",url:"https://v.qq.com/x/search/?q={q}",color:"#ff6b00",icon:"📺"},
+  {name:"Netflix",url:"https://www.netflix.com/search?q={q}",color:"#e50914",icon:"🌐"},
+  {name:"豆瓣",url:"https://search.douban.com/movie/subject_search?search_text={q}",color:"#00b51d",icon:"📚"}
+];
+
+// ==================== APP STATE ====================
+var state = {
+  query: '',
+  category: 'all',
+  activeGenre: null,
+  theme: localStorage.getItem('jp-search-theme') || 'light'
+};
+
+// ==================== UTILS ====================
+function debounce(fn, ms) {
+  var timer;
+  return function() {
+    var self = this;
+    var args = arguments;
+    clearTimeout(timer);
+    timer = setTimeout(function() { fn.apply(self, args); }, ms);
+  };
+}
+
+function highlightText(text, query) {
+  if (!query) return text;
+  var escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  var regex = new RegExp('(' + escaped + ')', 'gi');
+  return text.replace(regex, '<mark style="background:#ffe082;padding:0 2px;border-radius:3px;">$1</mark>');
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// 自动编码 URL 中的中文/日文字符
+function encodeURL(url) {
+  var qIndex = url.indexOf('?');
+  if (qIndex === -1) return url;
+  return url.substring(0, qIndex + 1) + encodeURI(url.substring(qIndex + 1));
+}
+
+// ==================== RENDER ====================
+function getFilteredData() {
+  var data = DATABASE.slice();
+  var q = state.query.trim().toLowerCase();
+
+  // Category filter
+  if (state.category !== 'all') {
+    data = data.filter(function(d) { return d.type === state.category; });
+  }
+
+  // Genre filter
+  if (state.activeGenre) {
+    data = data.filter(function(d) { return d.genres.indexOf(state.activeGenre) !== -1; });
+  }
+
+  // Search query
+  if (q) {
+    data = data.filter(function(d) {
+      // Basic match: title, jp title, genres, desc
+      if (d.title.toLowerCase().indexOf(q) !== -1) return true;
+      if (d.title_jp.toLowerCase().indexOf(q) !== -1) return true;
+      for (var i = 0; i < d.genres.length; i++) {
+        if (d.genres[i].toLowerCase().indexOf(q) !== -1) return true;
+      }
+      if (d.desc.toLowerCase().indexOf(q) !== -1) return true;
+
+      // Romanji cross-reference
+      var romaMap = {
+        'unnatural': 'アンナチュラル',
+        'legal high': 'リーガル',
+        'hanzawa naoki': '半沢直樹',
+        'kimetsu': '鬼滅の刃',
+        'jujutsu': '呪術廻戦',
+        'shingeki': '進撃の巨人',
+        'spy family': 'SPY×FAMILY',
+        'one piece': '海贼王',
+        'naruto': '火影忍者',
+        'bleach': '死神',
+        'gintama': '銀魂',
+        'slam dunk': '灌篮高手',
+        'haikyu': 'ハイキュー',
+        'one punch': 'ワンパンマン',
+        'fullmetal': '鋼の錬金術師',
+        'evangelion': '新世紀エヴァンゲリオン',
+        'sword art': 'ソードアート',
+        'steins gate': 'Steins;Gate',
+        'tokyo ghoul': '東京喰種',
+        'dragon ball': 'ドラゴンボール',
+        'chainsaw': 'チェンソーマン',
+        'frieren': '葬送のフリーレン',
+        'spirited away': '千と千尋',
+        'your name': '君の名は',
+        'suzume': 'すずめ',
+        'howl': 'ハウル',
+        'totoro': 'トトロ',
+        'death note': 'DEATH NOTE',
+        'parasyte': '寄生獣',
+        'jojo': 'ジョジョ',
+        'mob psycho': 'モブサイコ',
+        'bungou stray dogs': '文豪ストレイ',
+        'psycho pass': 'PSYCHO-PASS',
+        'cowboy bebop': 'カウボーイビバップ',
+        'ghost in the shell': '攻殻機動隊',
+        'angel beats': 'Angel Beats',
+        'k-on': 'けいおん',
+        'clannad': 'CLANNAD',
+        'ano hana': 'あの日見た花',
+        'toradora': 'とらドラ',
+        'hyouka': '氷菓',
+        'overlord': 'オーバーロード',
+        'konosuba': 'この素晴らしい',
+        'goblin slayer': 'ゴブリンスレイヤー',
+        'mushoku tensei': '無職転生',
+        're zero': 'ゼロから始める',
+        'made in abyss': 'メイドインアビス',
+        'odd taxi': 'オッドタクシー',
+        'sonny boy': 'Sonny Boy',
+        'summer time': 'サマータイムレンダ',
+        'bocchi the rock': 'ぼっち・ざ・ろっく',
+        'oshinoko': '推しの子',
+        'spy x family': 'SPY×FAMILY',
+        'kaguya sama': 'かぐや様',
+        'no game no life': 'ゲーム・ノーライフ',
+        'assassination classroom': '暗殺教室',
+        'grand blue': 'ぐらんぶる',
+        'bluelock': 'ブルーロック',
+        'haikyuu': 'ハイキュー',
+        'slam dunk movie': 'SLAM DUNK',
+        'princess mononoke': 'もののけ姫',
+        'ponyo': 'ポニョ',
+        'grave of the fireflies': '火垂るの墓',
+        'silent voice': '聲の形',
+        'ookami kodomo': 'おおかみこども',
+        'wolf children': 'おおかみこども',
+        'summer wars': 'サマーウォーズ',
+        'girl who leapt': '時をかける少女',
+        'kiki delivery': '魔女の宅急便',
+        'porco rosso': '紅の豚',
+        'nagi': '凪のお暇',
+        'spec': 'SPEC',
+        'dele': 'dele',
+        'kazoku game': '家族ゲーム',
+        'boss': 'BOSS',
+        'code blue': 'コード・ブルー',
+        'good luck': 'GOOD LUCK',
+        'beautiful life': 'ビューティフルライフ',
+        'orange days': 'オレンジデイズ',
+        'lupin': 'ルパン三世',
+        'gundam seed': 'ガンダムSEED',
+        'fate zero': 'Fate/Zero',
+        'golden kamuy': 'ゴールデンカムイ',
+        'hibike euphonium': 'ユーフォニアム',
+        'violet evergarden': 'ヴァイオレット・エヴァーガーデン',
+        'madoka magica': '魔法少女まどか',
+        'madoka': 'まどか',
+        'nichijou': '日常',
+        'danshi koukousei': '男子高校生',
+        'saiki': '斉木楠雄',
+        'sakamoto': '坂本',
+        'dungeon meshi': 'ダンジョン飯',
+        'frieren beyond': '葬送のフリーレン'
+      };
+      var matchKey = romaMap[q];
+      if (matchKey && (d.title_jp.indexOf(matchKey) !== -1 || d.title.indexOf(matchKey) !== -1)) {
+        return true;
+      }
+
+      return false;
+    });
+
+    // Sort: exact title match first, then by rating
+    data.sort(function(a, b) {
+      var aExact = a.title.toLowerCase() === q || a.title_jp.toLowerCase() === q;
+      var bExact = b.title.toLowerCase() === q || b.title_jp.toLowerCase() === q;
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      return b.rating - a.rating;
+    });
+  } else {
+    data.sort(function(a, b) { return b.rating - a.rating; });
+  }
+
+  return data;
+}
+
+function getAllGenres() {
+  var genreSet = {};
+  DATABASE.forEach(function(d) {
+    d.genres.forEach(function(g) { genreSet[g] = true; });
+  });
+  return Object.keys(genreSet).sort();
+}
+
+function renderGenreChips() {
+  var container = document.getElementById('genreChips');
+  var genres = getAllGenres();
+  var html = '';
+  for (var i = 0; i < genres.length; i++) {
+    var g = genres[i];
+    var activeClass = state.activeGenre === g ? ' active' : '';
+    html += '<button class="genre-chip' + activeClass + '" data-genre="' + g + '">' + g + '</button>';
+  }
+  container.innerHTML = html;
+}
+
+function renderResults() {
+  var data = getFilteredData();
+  var grid = document.getElementById('resultsGrid');
+  var fallback = document.getElementById('fallbackSection');
+  var resultCount = document.getElementById('resultCount');
+  var q = state.query.trim();
+
+  // Update counts
+  document.getElementById('totalCount').textContent = DATABASE.length;
+  if (data.length === 0 && q) {
+    resultCount.textContent = '未找到匹配结果';
+  } else if (data.length === DATABASE.length) {
+    resultCount.textContent = '共 ' + DATABASE.length + ' 部作品';
+  } else {
+    resultCount.textContent = '找到 ' + data.length + ' / ' + DATABASE.length + ' 部';
+  }
+
+  // Show/hide fallback
+  if (data.length === 0 && q) {
+    fallback.classList.add('show');
+    renderFallbackLinks(q);
+  } else {
+    fallback.classList.remove('show');
+  }
+
+  // Empty states
+  if (data.length === 0 && !q) {
+    grid.innerHTML = '<div class="empty-state"><div class="emoji">🎬</div><p>请使用搜索框或筛选器查找作品</p></div>';
+    return;
+  }
+  if (data.length === 0 && q) {
+    grid.innerHTML = '<div class="empty-state"><div class="emoji">🔍</div><p>没有找到匹配 <strong>' + escapeHtml(q) + '</strong> 的作品</p><p style="margin-top:8px;font-size:.85rem;">试试其他关键词,或使用下方平台直接搜索</p></div>';
+    return;
+  }
+
+  // Render cards
+  var html = '';
+  for (var i = 0; i < data.length; i++) {
+    var d = data[i];
+    var typeLabel = d.type === 'drama' ? '日剧' : d.type === 'anime' ? '日漫' : '电影';
+    var typeClass = d.type;
+    var posterEmoji = d.type === 'drama' ? '📺' : d.type === 'anime' ? '🎨' : '🎬';
+
+    html += '<div class="card" data-id="' + d.id + '" onclick="openModal(' + d.id + ')">';
+    html += '<div class="card-header">';
+    html += '<div class="card-poster">' + posterEmoji + '</div>';
+    html += '<div class="card-info">';
+    html += '<div class="card-title">' + highlightText(escapeHtml(d.title), q) + '</div>';
+    html += '<div class="card-title-jp">' + highlightText(escapeHtml(d.title_jp), q) + '</div>';
+    html += '<div class="card-meta">';
+    html += '<span class="type-badge ' + typeClass + '">' + typeLabel + '</span>';
+    html += '<span class="rating">⭐ ' + d.rating + '</span>';
+    html += '<span class="year">' + d.year + '</span>';
+    html += '</div>';
+    html += '<div class="card-genres">';
+    for (var j = 0; j < d.genres.length; j++) {
+      html += '<span>' + highlightText(escapeHtml(d.genres[j]), q) + '</span>';
+    }
+    html += '</div></div></div>';
+    html += '<div class="card-desc">' + highlightText(escapeHtml(d.desc), q) + '</div>';
+    html += '<div class="card-platforms">';
+    for (var k = 0; k < d.platforms.length; k++) {
+      var p = d.platforms[k];
+      html += '<a href="' + encodeURL(p.url) + '" target="_blank" class="platform-link" onclick="event.stopPropagation()" title="在' + p.name + '搜索">';
+      html += '<span class="pl-dot" style="background:' + p.color + '"></span>' + p.name + '</a>';
+    }
+    html += '</div></div>';
+  }
+  grid.innerHTML = html;
+}
+
+function renderFallbackLinks(query) {
+  var container = document.getElementById('fallbackLinks');
+  var html = '';
+  for (var i = 0; i < FALLBACK_PLATFORMS.length; i++) {
+    var p = FALLBACK_PLATFORMS[i];
+    var url = p.url.replace('{q}', encodeURIComponent(query));
+    html += '<a href="' + url + '" target="_blank" class="fallback-link">' + p.icon + ' ' + p.name + '搜索「' + escapeHtml(query) + '」</a>';
+  }
+  container.innerHTML = html;
+}
+
+function openModal(id) {
+  var d = null;
+  for (var i = 0; i < DATABASE.length; i++) {
+    if (DATABASE[i].id === id) { d = DATABASE[i]; break; }
+  }
+  if (!d) return;
+
+  var typeLabel = d.type === 'drama' ? '日剧' : d.type === 'anime' ? '日漫' : '电影';
+  var overlay = document.getElementById('modalOverlay');
+  var modal = document.getElementById('modal');
+
+  var html = '';
+  html += '<button class="modal-close" onclick="closeModal()">✕</button>';
+  html += '<span class="type-badge ' + d.type + '" style="margin-bottom:8px;display:inline-block;">' + typeLabel + '</span>';
+  html += '<h2>' + escapeHtml(d.title) + '</h2>';
+  html += '<div class="modal-jp">' + escapeHtml(d.title_jp) + ' · ' + d.year + ' · ⭐ ' + d.rating + '</div>';
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">';
+  for (var j = 0; j < d.genres.length; j++) {
+    html += '<span style="font-size:.78rem;padding:3px 10px;border-radius:50px;background:var(--bg-input);color:var(--text-secondary);">' + escapeHtml(d.genres[j]) + '</span>';
+  }
+  html += '</div>';
+  html += '<p class="modal-desc">' + escapeHtml(d.desc) + '</p>';
+  html += '<h3>📡 正版播放平台</h3>';
+  html += '<div class="modal-platforms">';
+  for (var k = 0; k < d.platforms.length; k++) {
+    var p = d.platforms[k];
+    html += '<a href="' + encodeURL(p.url) + '" target="_blank" class="modal-pl-item">';
+    html += '<span style="width:10px;height:10px;border-radius:50%;background:' + p.color + ';flex-shrink:0;"></span>';
+    html += '<span class="pl-name">' + p.name + '</span>';
+    html += '<span class="pl-type">点击搜索播放</span>';
+    html += '<span class="pl-arrow">→</span>';
+    html += '</a>';
+  }
+  html += '</div>';
+  html += '<p style="margin-top:16px;font-size:.78rem;color:var(--text-muted);text-align:center;">💡 点击平台链接后,在对应平台内查找播放地址<br>版权分布可能随时变动,以平台实际情况为准</p>';
+
+  modal.innerHTML = html;
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ==================== THEME ====================
+function setTheme(theme) {
+  state.theme = theme;
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('jp-search-theme', theme);
+  document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  setTheme(state.theme === 'dark' ? 'light' : 'dark');
+}
+
+// ==================== EVENT HANDLERS ====================
+var searchInput = document.getElementById('searchInput');
+var searchBtn = document.getElementById('searchBtn');
+
+function doSearch() {
+  state.query = searchInput.value;
+  state.activeGenre = null;
+  renderGenreChips();
+  renderResults();
+}
+
+searchInput.addEventListener('input', debounce(function() {
+  state.query = searchInput.value;
+  renderResults();
+}, 200));
+
+searchInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doSearch();
+});
+
+searchBtn.addEventListener('click', doSearch);
+
+// Category tabs
+document.getElementById('catTabs').addEventListener('click', function(e) {
+  var tab = e.target.closest('.cat-tab');
+  if (!tab) return;
+  var tabs = this.querySelectorAll('.cat-tab');
+  for (var i = 0; i < tabs.length; i++) { tabs[i].classList.remove('active'); }
+  tab.classList.add('active');
+  state.category = tab.dataset.cat;
+  renderResults();
+});
+
+// Genre chips
+document.getElementById('genreChips').addEventListener('click', function(e) {
+  var chip = e.target.closest('.genre-chip');
+  if (!chip) return;
+  var genre = chip.dataset.genre;
+  if (state.activeGenre === genre) {
+    state.activeGenre = null;
+  } else {
+    state.activeGenre = genre;
+  }
+  renderGenreChips();
+  renderResults();
+});
+
+// Modal close
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Theme toggle
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+// ==================== INIT ====================
+function init() {
+  setTheme(state.theme);
+  renderGenreChips();
+  renderResults();
+}
+
+init();
+</script>
+</body>
+</html>
